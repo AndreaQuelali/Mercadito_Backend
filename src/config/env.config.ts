@@ -1,0 +1,12 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+export const ENV = {
+    PORT: process.env.PORT || 3001,
+    POSTGRES_USER: process.env.POSTGRES_USER || "andy",
+    POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD || "mercadito123",
+    POSTGRES_DB: process.env.POSTGRES_DB || "mercaditoDB",
+    PGDATA: process.env.PGDATA || "/var/lib/postgresql/data/pgdata",
+    PGHOST: process.env.PGHOST || "localhost",
+    PGPORT: process.env.PGPORT || 5432,
+}
