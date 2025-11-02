@@ -5,12 +5,12 @@ const productRouter = router();
 
 //CRUD
 //Create
-productRouter.post("/product", createProduct)
+productRouter.post("/", createProduct)
 //Read
-productRouter.get("/products", readProduct)
+productRouter.get("/", readProduct)
 //Update
-productRouter.put("/product/:id", updateProduct)
+productRouter.put("/:id", updateProduct)
 //Delete
-productRouter.delete("/product/:id", deleteProduct)
+productRouter.delete("/:id", deleteProduct)
 
 export default productRouter
