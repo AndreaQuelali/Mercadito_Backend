@@ -1,148 +1,151 @@
 import { IServiceResponse } from "../../types";
 import { ICreateProduct } from "./dtos/createProduct.dto";
-import { IUpdateProduct } from "./dtos/updateProduct";
+import { IUpdateProduct } from "./dtos/updateProduct.dto";
 import { IProduct } from "./interfaces/product.interface";
+import prisma from "../../config/prisma";
+import { IProductFilter } from "./dtos/productFilter.dto";
 
-let products= [{
-    id: 1,
-    name: "Product 1",
-    price: 10,
-    stock: 10,
-    unit: "Unit 1",
-    category: "Category 1",
-    description: "Description 1",
-    image: "Image 1",
-    createdAt: new Date(),
-    updatedAt: new Date()
-},{
-    id: 2,
-    name: "Product 2",
-    price: 20,
-    stock: 20,
-    unit: "Unit 2",
-    category: "Category 2",
-    description: "Description 2",
-    image: "Image 2",
-    createdAt: new Date(),
-    updatedAt: new Date()
-},{
-    id: 3,
-    name: "Product 3",
-    price: 30,
-    stock: 30,
-    unit: "Unit 3",
-    category: "Category 3",
-    description: "Description 3",
-    image: "Image 3",
-    createdAt: new Date(),
-    updatedAt: new Date()
-}];
+export const createProductService = async (
+  payload: ICreateProduct
+): Promise<IServiceResponse<IProduct | null>> => {
+  try {
+    const product = await prisma.product.create({
+      data: payload,
+    });
 
-export const createProductService = (payload: ICreateProduct) :IServiceResponse<IProduct | null> => {
-    try {
-    const product : IProduct = {
-        id: Date.now(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...payload
+    return {
+      message: "Product created successfully",
+      ok: true,
+      data: product
+    };
+  } catch (error) {
+    return {
+      message: "Error creating product",
+      ok: false,
+      data: null,
+    };
+  }
+};
+
+export const readProductService = async (
+  filter: IProductFilter = {}
+): Promise<IServiceResponse<IProduct[] | null>> => {
+  try {
+    const where: any = {};
+
+    if (filter.name) {
+      where.name = { contains: filter.name, mode: "insensitive" };
     }
-    products.push(product);
-    return{
-        message: "Product created successfully",
-        ok: true,
-        data: product
-    }
-    } catch (error) {
-        return {
-            message: "Error creating product",
-            ok: false,
-            data: null
-        }
-    }       
-}
 
-export const readProductService = () :IServiceResponse<IProduct[] | null> => {
-    try {
-    return{
-        message: "Products",
-        ok: true,
-        data: products
+    if (filter.category) {
+      where.category = filter.category;
     }
-    } catch (error) {
-        return {
-            message: "Error reading products",
-            ok: false,
-            data: null
-        }
-    }       
-}
 
-export const updateProductService = (id: number, payload: IUpdateProduct) :IServiceResponse<IProduct | null> => {
-    try {
-    const product = products.find((product) => product.id === id);
-    if (!product) {
-        return{
-            message: "Product not found",
-            ok: false,
-            data: null
-        }
+    if (filter.minPrice !== undefined || filter.maxPrice !== undefined) {
+      where.price = {};
+      if (filter.minPrice !== undefined) where.price.gte = filter.minPrice;
+      if (filter.maxPrice !== undefined) where.price.lte = filter.maxPrice;
     }
-    product.price = payload.price;
-    product.stock = payload.stock;
-    product.unit = payload.unit;
-    product.category = payload.category;
-    product.description = payload.description;
-    product.image = payload.image;
-    product.updatedAt = new Date();
 
-    products.map((product) => {if (product.id === Number(id)) {
-        product.price = payload.price;
-        product.stock = payload.stock;
-        product.unit = payload.unit;
-        product.category = payload.category;
-        product.description = payload.description;
-        product.image = payload.image;
-        product.updatedAt = new Date();
-    }});
-    return{
-        message: "Product updated successfully",
-        ok: true,
-        data: product
+    if (filter.startAt || filter.endAt) {
+      where.createdAt = {};
+      if (filter.startAt) where.createdAt.gte = new Date(filter.startAt);
+      if (filter.endAt) where.createdAt.lte = new Date(filter.endAt);
     }
-    } catch (error) {
-        return {
-            message: "Error updating product",
-            ok: false,
-            data: null
-        }
-    }       
-}
 
-export const deleteProductService = (id: number) :IServiceResponse<IProduct | null> => {
-    try {
-        const productIndex = products.findIndex((product) => product.id === Number(id));
-        if (productIndex === -1) {
-            return {
-                message: "Product not found",
-                ok: false,
-                data: null
-            }
-        }
-        const deletedProduct = products[productIndex];
-    
-        const newProducts = products.filter((product) => product.id !== Number(id));
-        products = newProducts;
-        
-        return{
-            message: "Product deleted successfully",
-            ok: true,
-            data: deletedProduct
-        }
-    } catch (error) {
-        return {
-            message: "Error deleting product",
-            ok: false,
-            data: null
-        }
-    }       
-}
+    const result = await prisma.product.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (Array.isArray(result) && result.length === 0) {
+      return {
+        message: "Products not found",
+        ok: false,
+        data: null,
+      };
+    }
+
+    return {
+      message: "Products",
+      ok: true,
+      data: result as unknown as IProduct[],
+    };
+  } catch (error) {
+    return {
+      message: "Error reading products",
+      ok: false,
+      data: null,
+    };
+  }
+};
+
+export const updateProductService = async (
+  id: number,
+  payload: IUpdateProduct
+): Promise<IServiceResponse<IProduct | null>> => {
+  try {
+    const existing = await prisma.product.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existing) {
+      return {
+        message: "Product not found",
+        ok: false,
+        data: null,
+      };
+    }
+
+    const updated = await prisma.product.update({
+      where: { id: Number(id) },
+      data: payload,
+    });
+
+    return {
+      message: "Product updated successfully",
+      ok: true,
+      data: updated,
+    };
+  } catch (error) {
+    return {
+      message: "Error updating product",
+      ok: false,
+      data: null,
+    };
+  }
+};
+
+export const deleteProductService = async (
+  id: number
+): Promise<IServiceResponse<IProduct | null>> => {
+  try {
+    const existing = await prisma.product.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existing) {
+      return {
+        message: "Product not found",
+        ok: false,
+        data: null,
+      };
+    }
+
+    const deleted = await prisma.product.delete({
+      where: { id: Number(id) },
+    });
+
+    return {
+      message: "Product deleted successfully",
+      ok: true,
+      data: deleted,
+    };
+  } catch (error) {
+    return {
+      message: "Error deleting product",
+      ok: false,
+      data: null,
+    };
+  }
+};
