@@ -1,7 +1,7 @@
 services:
   database: 
     image: postgres:17.6
-    container_name: postgres-db
+    container_name: postgres-db-mercadito
     environment: 
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
