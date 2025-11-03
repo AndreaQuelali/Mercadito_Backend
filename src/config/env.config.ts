@@ -8,5 +8,5 @@ export const ENV = {
     POSTGRES_DB: process.env.POSTGRES_DB || "mercaditoDB",
     PGDATA: process.env.PGDATA || "/var/lib/postgresql/data/pgdata",
     PGHOST: process.env.PGHOST || "localhost",
-    PGPORT: process.env.PGPORT || 5432,
+    PGPORT: process.env.PGPORT || 5433,
 }
