@@ -6,4 +6,5 @@ export interface ICreateProduct {
     category: string;
     description: string;
     image: string;  
+    sellerId: string;
 }

@@ -4,7 +4,11 @@ import { createProductService, deleteProductService, readProductService, updateP
 export const createProduct = async (req: Request, res: Response) => {
     try {
     const data = req.body;
-    const result = await createProductService(data);
+    const sellerId = req.user?.sub as string;
+    if (!sellerId) {
+      return res.status(401).send({ message: "No autorizado", status: 401, ok: false });
+    }
+    const result = await createProductService({ ...data, sellerId });
     if (!result.ok) {
         return res.status(400).send({message: result.message, status: 400, ok: false});
     }
