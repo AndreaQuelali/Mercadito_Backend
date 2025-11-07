@@ -5,3 +5,4 @@ database/
 .env
 .vscode/
 dist/
+migrations/
