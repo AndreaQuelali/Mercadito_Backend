@@ -1,0 +1,710 @@
+{
+	"info": {
+		"_postman_id": "a22d6b74-6ca9-4bc2-adb7-66b11ebfa0ca",
+		"name": "Mercadito",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44924327"
+	},
+	"item": [
+		{
+			"name": "health",
+			"item": [
+				{
+					"name": "health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/health",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "products",
+			"item": [
+				{
+					"name": "product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"name\":\"Cebollas\",\n    \"price\":1.5,\"stock\":100,\n    \"unit\":\"kilogramo\",\n    \"category\":\"verduras\",\n    \"description\":\"Cebollas de huerto...\",\n    \"image\":\"https://imageCebolla\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/product",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/product",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "new product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"price\": 1,\n    \"stock\": 10,\n    \"unit\": \"unidad\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/product/1",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/product/1",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "filter product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/product/?name=prod&category=fruta&minPrice=10&maxPrice=100&startAt=2025-01-01&endAt=2025-11-11",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "prod"
+								},
+								{
+									"key": "category",
+									"value": "fruta"
+								},
+								{
+									"key": "minPrice",
+									"value": "10"
+								},
+								{
+									"key": "maxPrice",
+									"value": "100"
+								},
+								{
+									"key": "startAt",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "endAt",
+									"value": "2025-11-11"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mine products",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/product/mine",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"product",
+								"mine"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/user/profile",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/user",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user for id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"user",
+								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user id",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Camila Ana\",\n    \"lastName\": \"Almaraz\",\n    \"phoneNumber\": \"60310409\",\n    \"phoneCountryCode\": \"+591\",\n    \"country\": \"Bolivia\",\n    \"city\": \"Cochabamba\",\n    \"email\": \"camila2@demo.com\",\n    \"role\": \"client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"user",
+								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"user",
+								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Juan\",\n    \"lastName\": \"Almaraz\",\n    \"phoneNumber\": \"60310409\",\n    \"phoneCountryCode\": \"+591\",\n    \"country\": \"Bolivia\",\n    \"city\": \"Cochabamba\",\n    \"email\": \"juanclient@demo.com\",\n    \"password\": \"123456\",\n    \"role\": \"client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/auth/register",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"joseseller@demo.com\", \n    \"password\": \"123456\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/auth/login",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "forgot password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"email\": \"admin@demo.com\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/auth/password/forgot",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"forgot"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"token\": \"f50f40d9ed5d84b9403d98a18040d\", \n    \"newPassword\": \"nuevaClave123\" \n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/auth/password/reset",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"reset"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "orders",
+			"item": [
+				{
+					"name": "my orders",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIxOTkwLCJleHAiOjE3NjMzMDgzOTB9.1d1qqJu59hvCDCHw__GodUTzIT2DYgGcvp_e1ndp9O8",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/order",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIxOTkwLCJleHAiOjE3NjMzMDgzOTB9.1d1qqJu59hvCDCHw__GodUTzIT2DYgGcvp_e1ndp9O8",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/order/1",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"order",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "status order id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"status\": \"shipped\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/order/1/status",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"order",
+								"1",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "reviews",
+			"item": [
+				{
+					"name": "review",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\":5,\n    \"rating\":5,\n    \"comment\":\"Excelente\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/review",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"review"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "review product id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/review/product/1",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"review",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "carts",
+			"item": [
+				{
+					"name": "cart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/cart",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"cart"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"productId\": 2, \n    \"quantity\": 2 \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/cart/add",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"cart",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkout cart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/cart/checkout",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"cart",
+								"checkout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
