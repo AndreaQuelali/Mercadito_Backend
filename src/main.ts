@@ -12,7 +12,7 @@ async function init() {
         await prisma.$connect();
         console.log("Database connection established");
 
-        const PORT = ENV.PORT || 3001;
+        const PORT = ENV.PORT || 3000;
         const app = express();
         app.use(bodyParser.json());
         app.use("/", router);
