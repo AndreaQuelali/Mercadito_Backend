@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { createProductService, deleteProductService, readProductService, updateProductService } from "./products.service";
+import { createProductService, deleteProductService, readProductService, updateProductService, listSellerProductsService } from "./products.service";
 
 export const createProduct = async (req: Request, res: Response) => {
-    try {
+  try {
     const data = req.body;
     const sellerId = req.user?.sub as string;
     if (!sellerId) {
@@ -10,16 +10,28 @@ export const createProduct = async (req: Request, res: Response) => {
     }
     const result = await createProductService({ ...data, sellerId });
     if (!result.ok) {
-        return res.status(400).send({message: result.message, status: 400, ok: false});
+      return res.status(400).send({ message: result.message, status: 400, ok: false });
     }
-    res.status(201).send({message: result.message, status: 201, ok: true, data: result.data});
-    } catch (error) {
-        res.status(500).send({message: "Error creating product", status: 500, ok: false, error: error});
-    }
+    res.status(201).send({ message: result.message, status: 201, ok: true, data: result.data });
+  } catch (error) {
+    res.status(500).send({ message: "Error creating product", status: 500, ok: false, error: error });
+  }
+};
+
+export const listSellerProducts = async (req: Request, res: Response) => {
+  try {
+    const sellerId = req.user?.sub as string;
+    if (!sellerId) return res.status(401).send({ ok: false, status: 401, message: "No autorizado" });
+    const result = await listSellerProductsService(sellerId);
+    if (!result.ok) return res.status(404).send({ ok: false, status: 404, message: result.message });
+    return res.status(200).send({ ok: true, status: 200, message: result.message, data: result.data });
+  } catch (error) {
+    return res.status(500).send({ ok: false, status: 500, message: "Error fetching seller products", error });
+  }
 };
 
 export const readProduct = async (req: Request, res: Response) => {
-    try {
+  try {
     const query = req.query;
     const filter: any = {};
 
@@ -33,7 +45,7 @@ export const readProduct = async (req: Request, res: Response) => {
     if (typeof query.category === "string") {
       const sanitized = query.category.trim();
       if (sanitized.length > 0 && sanitized.length <= 255) {
-        filter.category = sanitized;
+        filter.category = sanitized as any;
       }
     }
 
@@ -57,39 +69,39 @@ export const readProduct = async (req: Request, res: Response) => {
 
     const result = await readProductService(filter);
     if (!result.ok) {
-        return res.status(400).send({message: result.message, status: 400, ok: false});
+      return res.status(400).send({ message: result.message, status: 400, ok: false });
     }
-    res.status(200).send({message: result.message, status: 200, ok: true, data: result.data});
-    } catch (error) {
-        res.status(500).send({message: "Error reading products", status: 500, ok: false, error: error});
-    }
+    res.status(200).send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    res.status(500).send({ message: "Error reading products", status: 500, ok: false, error: error });
+  }
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
-    try {
+  try {
     const data = req.body;
     const id = req.params.id;
-  
+
     const result = await updateProductService(Number(id), data);
     if (!result.ok) {
-        return res.status(400).send({message: result.message, status: 400, ok: false});
+      return res.status(400).send({ message: result.message, status: 400, ok: false });
     }
-    res.status(200).send({message: result.message, status: 200, ok: true, data: result.data});
-    } catch (error) {
-        res.status(500).send({message: "Error updating product", status: 500, ok: false, error: error});
-    }
+    res.status(200).send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    res.status(500).send({ message: "Error updating product", status: 500, ok: false, error: error });
+  }
 };
 
 export const deleteProduct = async (req: Request, res: Response) => {
-    try {
+  try {
     const id = req.params.id;
-   const result = await deleteProductService(Number(id));
+    const result = await deleteProductService(Number(id));
     if (!result.ok) {
-        return res.status(400).send({message: result.message, status: 400, ok: false});
+      return res.status(400).send({ message: result.message, status: 400, ok: false });
     }
-    res.status(200).send({message: result.message, status: 200, ok: true, data: result.data});
-    } catch (error) {
-        res.status(500).send({message: "Error deleting product", status: 500, ok: false, error: error});
-    }
+    res.status(200).send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    res.status(500).send({ message: "Error deleting product", status: 500, ok: false, error: error });
+  }
 };
 
