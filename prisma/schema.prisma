@@ -11,13 +11,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Category {
+  verduras
+  frutas
+  panaderia
+  lacteos
+  artesanias
+}
+
+enum Unit {
+  kilogramo
+  unidad
+  frasco
+  litro
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
   price       Int
   stock       Int
-  unit        String
-  category    String
+  unit        Unit
+  category    Category
   description String
   image       String
   sellerId    String
