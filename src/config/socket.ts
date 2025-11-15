@@ -9,7 +9,6 @@ export function initSocket(server: HTTPServer) {
   });
 
   io.on("connection", (socket: Socket) => {
-    // Client should emit: { type: 'register', userId }
     socket.on("register", (userId: string) => {
       if (userId) {
         socket.join(`user:${userId}`);
@@ -17,7 +16,7 @@ export function initSocket(server: HTTPServer) {
     });
 
     socket.on("disconnect", () => {
-      // cleanup if needed
+      
     });
   });
 
