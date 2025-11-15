@@ -7,6 +7,8 @@ import { UserRole as PrismaUserRole } from "@prisma/client";
 import { securePass, validatePassHash } from "../../tools/crypto.tool";
 import { generateAccessToken } from "../../tools/jwt.tool";
 import prisma from "../../config/prisma";
+import { enqueueMail } from "../../tools/mailQueue.tool";
+import { createResetToken, deleteResetToken, getUserIdByResetToken } from "../../tools/passwordReset.tool";
 
 export const registerService = async (
   payload: IRegisterDto
@@ -79,8 +81,22 @@ export const forgotPasswordService = async (
   _payload: IForgotPasswordDto
 ): Promise<IAuthResponse> => {
   try {
-    // TODO: Generate token and send email
-    return { ok: true, message: "Password recovery - pending implementation" };
+    const user = await prisma.user.findUnique({ where: { email: _payload.email } });
+    if (!user) {
+      // Do not leak existence; respond ok with generic message
+      return { ok: true, message: "If the email exists, a reset link was sent" };
+    }
+
+    const token = await createResetToken(user.id);
+    const resetUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
+
+    await enqueueMail({
+      to: user.email,
+      subject: "Restablecer contraseña",
+      text: `Usa este enlace para restablecer tu contraseña: ${resetUrl} (válido por 15 minutos)`,
+    });
+
+    return { ok: true, message: "If the email exists, a reset link was sent" };
   } catch (error) {
     return { ok: false, message: "Error processing password recovery" };
   }
@@ -90,7 +106,20 @@ export const resetPasswordService = async (
   _payload: IResetPasswordDto
 ): Promise<IAuthResponse> => {
   try {
-    return { ok: true, message: "Password reset - pending implementation" };
+    const userId = await getUserIdByResetToken(_payload.token);
+    if (!userId) {
+      return { ok: false, message: "Invalid or expired token" };
+    }
+
+    const passHash = await securePass(_payload.newPassword);
+    if (passHash === undefined) {
+      throw new Error("Error hashing password");
+    }
+
+    await prisma.user.update({ where: { id: userId }, data: { password: passHash } });
+    await deleteResetToken(_payload.token);
+
+    return { ok: true, message: "Password updated successfully" };
   } catch (error) {
     return { ok: false, message: "Error resetting password" };
   }
