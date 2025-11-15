@@ -1,9 +1,11 @@
+import { Category, Unit } from "@prisma/client";
+
 export interface ICreateProduct {
     name: string;
     price: number;
     stock: number;
-    unit: string;
-    category: string;
+    unit: Unit;
+    category: Category;
     description: string;
     image: string;  
     sellerId: string;
