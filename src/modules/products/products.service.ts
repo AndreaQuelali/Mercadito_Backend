@@ -9,9 +9,7 @@ export const createProductService = async (
   payload: ICreateProduct
 ): Promise<IServiceResponse<IProduct | null>> => {
   try {
-    const product = await prisma.product.create({
-      data: payload,
-    });
+    const product = await prisma.product.create({ data: { ...payload } });
 
     return {
       message: "Product created successfully",
@@ -24,6 +22,23 @@ export const createProductService = async (
       ok: false,
       data: null,
     };
+  }
+};
+
+export const listSellerProductsService = async (
+  sellerId: string
+): Promise<IServiceResponse<IProduct[] | null>> => {
+  try {
+    const products = await prisma.product.findMany({
+      where: { sellerId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (products.length === 0) {
+      return { message: "Products not found", ok: false, data: null };
+    }
+    return { message: "Seller products", ok: true, data: products as unknown as IProduct[] };
+  } catch (error) {
+    return { message: "Error reading seller products", ok: false, data: null };
   }
 };
 
