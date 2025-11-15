@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response) => {
       phoneCountryCode: data.phoneCountryCode ?? "",
       country: data.country ?? "",
       city: data.city ?? "",
-      role: PrismaUserRole.client,
+      role: PrismaUserRole.client, // Default role, change to .seller or .admin if needed
     };
 
     const result = await registerService(payload);

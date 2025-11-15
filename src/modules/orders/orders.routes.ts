@@ -8,7 +8,7 @@ const orderRouter = Router();
 
 orderRouter.use(validateSesionUser);
 orderRouter.get("/", listMyOrders);
-orderRouter.get("/:id", listMyOrders, getOrderById);
+orderRouter.get("/:id", getOrderById);
 orderRouter.patch(
   "/:id/status",
   userRoleValidation(UserRole.seller, UserRole.admin),

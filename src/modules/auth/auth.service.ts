@@ -29,7 +29,6 @@ export const registerService = async (
     const user = await prisma.user.create({
       data: {
         ...payload,
-        role: PrismaUserRole.client,
         password: passHash,
       },
       select: { id: true, email: true, firstName: true, lastName: true },
