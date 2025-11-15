@@ -46,10 +46,12 @@ Asegúrate de tener instalado:
      ```
      Nota: Usa `REDIS_HOST=redis` y `REDIS_PORT=6379` solo si el backend también corre dentro de Docker en la misma red de `docker-compose`.
 
+     
+
 4. Levantar la Base de Datos y Redis con Docker Compose
 
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 
    Servicios incluidos:
@@ -202,16 +204,9 @@ Mercadito_Backend/
 
 ---
 
-## ❗ Solución de problemas
+## Video
 
-- Asegúrate de estar en Node.js 18 o superior: `node -v`.
-- Si `npm run start:dev` falla, confirma que `src/main.ts` existe y que no tiene errores de compilación.
-- Si usas base de datos, confirma que las variables de entorno (`DATABASE_URL`, etc.) están configuradas.
-- Error `ENOTFOUND redis`: usa `REDIS_HOST=localhost` cuando el backend corre en host. Usa `redis` solo si backend también corre dentro de Docker.
-- Error `EADDRINUSE :3000`/`:3001`: el puerto está ocupado. Mata el proceso (`lsof -i :3000` y `kill -9 <PID>`) o cambia `PORT` en `.env`.
-- Error en Postman "Invalid character in header content [Host]": No agregues el header `Host` manualmente. Escribe la URL manualmente (`http://localhost:3000`) y revisa que no tenga caracteres ocultos.
-
----
+https://youtu.be/awK9k7n1aBc
 
 ## 📜 Licencia
 
