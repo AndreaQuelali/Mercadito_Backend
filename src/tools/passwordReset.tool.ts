@@ -1,7 +1,8 @@
 import IORedis from "ioredis";
 import crypto from "crypto";
+import { ENV } from "../config/env.config";
 
-const redis = new IORedis({ host: "localhost", port: 6379, maxRetriesPerRequest: null });
+const redis = new IORedis({ host: ENV.REDIS_HOST, port: Number(ENV.REDIS_PORT), maxRetriesPerRequest: null });
 
 const PREFIX = "pwdreset:";
 const TTL_SECONDS = 60 * 15; // 15 min

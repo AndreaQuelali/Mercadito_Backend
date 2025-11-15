@@ -1,5 +1,6 @@
 import { Queue, Worker, JobsOptions, Job } from "bullmq";
 import IORedis from "ioredis";
+import { ENV } from "../config/env.config";
 
 export type MailJobPayload = {
   to: string;
@@ -9,8 +10,8 @@ export type MailJobPayload = {
 };
 
 const connection = new IORedis({
-  host: "localhost",
-  port: 6379,
+  host: ENV.REDIS_HOST,
+  port: Number(ENV.REDIS_PORT),
   maxRetriesPerRequest: null,
 });
 
