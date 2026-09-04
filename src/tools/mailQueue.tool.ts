@@ -26,7 +26,35 @@ export function initMailWorker() {
     "mailQueue",
     async (job: Job<MailJobPayload>) => {
       const { to, subject, html, text } = job.data;
-      console.log(`[mail:worker] sending to=${to} subject=${subject} text=${text?.slice(0, 120)}`);
+
+      // Use nodemailer when SMTP is configured; fall back to console log in dev
+      if (ENV.SMTP_HOST) {
+        const nodemailer = await import("nodemailer");
+        const transporter = nodemailer.createTransport({
+          host: ENV.SMTP_HOST,
+          port: ENV.SMTP_PORT,
+          secure: ENV.SMTP_PORT === 465,
+          auth: {
+            user: ENV.SMTP_USER,
+            pass: ENV.SMTP_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: ENV.SMTP_FROM,
+          to,
+          subject,
+          text,
+          html,
+        });
+
+        console.log(`[mail:worker] email sent to=${to} subject="${subject}"`);
+      } else {
+        // Development fallback — log the email content instead of sending
+        console.log(
+          `[mail:worker] (DEV — no SMTP configured) to=${to} subject="${subject}" text=${text?.slice(0, 120)}`
+        );
+      }
     },
     { connection }
   );

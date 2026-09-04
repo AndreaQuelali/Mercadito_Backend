@@ -29,7 +29,7 @@ enum Unit {
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
-  price       Int
+  price       Decimal  @db.Decimal(10, 2)
   stock       Int
   unit        Unit
   category    Category
@@ -75,7 +75,7 @@ model User {
 
 model Cart {
   id        Int       @id @default(autoincrement())
-  userId    String
+  userId    String    @unique  // One active cart per user
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -110,7 +110,7 @@ model Order {
   id         Int         @id @default(autoincrement())
   userId     String
   status     OrderStatus @default(pending)
-  total      Int         @default(0)
+  total      Decimal     @default(0) @db.Decimal(10, 2)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
@@ -123,7 +123,7 @@ model OrderItem {
   orderId   Int
   productId Int
   quantity  Int
-  price     Int      // price at purchase time
+  price     Decimal  @db.Decimal(10, 2)  // price at purchase time
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

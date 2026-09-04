@@ -31,6 +31,9 @@ export const userRoleValidation = (...roles: UserRole[]) => {
         status: 401,
       });
     }
+
+    // Attach role to req.user so controllers can use it without extra DB queries
+    req.user.role = user.role;
     next();
   };
 };
