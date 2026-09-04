@@ -12,15 +12,39 @@ import { UserRole } from "@prisma/client";
 
 const userRouter = Router();
 
+// Own profile — any authenticated user
 userRouter.get("/profile", validateSesionUser, getUserProfile);
-userRouter.get("/", getUsers);
+
+// List all users — admin only
+userRouter.get(
+  "/",
+  validateSesionUser,
+  userRoleValidation(UserRole.admin),
+  getUsers
+);
+
+// Get user by id — admin or seller
 userRouter.get(
   "/:id",
   validateSesionUser,
   userRoleValidation(UserRole.admin, UserRole.seller),
   getUserById
 );
-userRouter.patch("/:id", updateUserPartial);
-userRouter.delete("/:id", deleteUser);
+
+// Update user — admin only
+userRouter.patch(
+  "/:id",
+  validateSesionUser,
+  userRoleValidation(UserRole.admin),
+  updateUserPartial
+);
+
+// Delete user — admin only
+userRouter.delete(
+  "/:id",
+  validateSesionUser,
+  userRoleValidation(UserRole.admin),
+  deleteUser
+);
 
 export default userRouter;

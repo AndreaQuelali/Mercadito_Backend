@@ -14,6 +14,9 @@ export interface IUser {
   password: string;
 }
 
+/** User safe — no password field, safe to expose in API responses */
+export type ISafeUser = Omit<IUser, "password">;
+
 export interface IUserFilter {
   firstName?: string;
   lastName?: string;

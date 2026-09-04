@@ -11,15 +11,21 @@ export async function createReviewService(
     if (rating < 1 || rating > 5)
       return { ok: false, message: "Rating must be between 1 and 5" };
 
-    const ordered = await prisma.orderItem.findFirst({
-      where: { productId, order: { userId } },
+    // Only allow reviews when the order has been delivered
+    const deliveredOrder = await prisma.orderItem.findFirst({
+      where: {
+        productId,
+        order: { userId, status: "delivered" },
+      },
       include: { order: true },
     });
-    if (!ordered)
+
+    if (!deliveredOrder) {
       return {
         ok: false,
-        message: "You must purchase the product before reviewing",
+        message: "You can only review a product after your order has been delivered",
       };
+    }
 
     const review = await prisma.review.create({
       data: { userId, productId, rating, comment },

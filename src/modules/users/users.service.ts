@@ -3,11 +3,26 @@ import { UserRole } from "@prisma/client";
 import { IServiceResponse } from "../../types";
 import { ICreateUserDto } from "./dtos/createUser.dto";
 import { IUpdateUserDto } from "./dtos/updateUser.dto";
-import { IUserFilter, IUser } from "./interfaces/users.interfaces";
+import { IUserFilter, ISafeUser } from "./interfaces/users.interfaces";
+
+/** Prisma select that excludes password from user responses */
+const userSafeSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  phoneNumber: true,
+  phoneCountryCode: true,
+  country: true,
+  city: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 export const createUserService = async (
   payload: ICreateUserDto
-): Promise<IServiceResponse<IUser>> => {
+): Promise<IServiceResponse<ISafeUser>> => {
   try {
     const existing = await prisma.user.findUnique({
       where: { email: payload.email },
@@ -22,9 +37,10 @@ export const createUserService = async (
         ...payload,
         role: (payload.role as any) ?? UserRole.client,
       },
+      select: userSafeSelect,
     });
 
-    return { message: "User created successfully", ok: true, data: user };
+    return { message: "User created successfully", ok: true, data: user as unknown as ISafeUser };
   } catch (error) {
     return { message: "Error creating user", ok: false };
   }
@@ -32,11 +48,14 @@ export const createUserService = async (
 
 export const getUserProfileService = async (
   id: string
-): Promise<IServiceResponse<IUser | null>> => {
+): Promise<IServiceResponse<ISafeUser | null>> => {
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: userSafeSelect,
+    });
     if (!user) return { message: "No user", ok: false };
-    return { message: "User profile", ok: true, data: user };
+    return { message: "User profile", ok: true, data: user as unknown as ISafeUser };
   } catch (error) {
     return { message: "Error getting user profile", ok: false };
   }
@@ -44,7 +63,7 @@ export const getUserProfileService = async (
 
 export const getUsersService = async (
   filter: IUserFilter
-): Promise<IServiceResponse<IUser[]>> => {
+): Promise<IServiceResponse<ISafeUser[]>> => {
   try {
     const where: any = {};
 
@@ -71,13 +90,14 @@ export const getUsersService = async (
       where,
       orderBy: { createdAt: "desc" },
       take: 100,
+      select: userSafeSelect,
     });
 
     if (users.length === 0) {
       return { message: "Users not found", ok: false };
     }
 
-    return { message: "Users fetched successfully", ok: true, data: users };
+    return { message: "Users fetched successfully", ok: true, data: users as unknown as ISafeUser[] };
   } catch (error) {
     return { message: "Error fetching users", ok: false };
   }
@@ -85,11 +105,14 @@ export const getUsersService = async (
 
 export const getUserByIdService = async (
   id: string
-): Promise<IServiceResponse<IUser>> => {
+): Promise<IServiceResponse<ISafeUser>> => {
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: userSafeSelect,
+    });
     if (!user) return { message: "User not found", ok: false };
-    return { message: "User fetched successfully", ok: true, data: user };
+    return { message: "User fetched successfully", ok: true, data: user as unknown as ISafeUser };
   } catch (error) {
     return { message: "Error fetching user", ok: false };
   }
@@ -98,7 +121,7 @@ export const getUserByIdService = async (
 export const updateUserService = async (
   id: string,
   payload: IUpdateUserDto
-): Promise<IServiceResponse<IUser>> => {
+): Promise<IServiceResponse<ISafeUser>> => {
   try {
     if (payload.email) {
       const exists = await prisma.user.findFirst({
@@ -112,9 +135,10 @@ export const updateUserService = async (
     const updated = await prisma.user.update({
       where: { id },
       data: payload,
+      select: userSafeSelect,
     });
 
-    return { message: "User updated successfully", ok: true, data: updated };
+    return { message: "User updated successfully", ok: true, data: updated as unknown as ISafeUser };
   } catch (error) {
     if ((error as any)?.code === "P2025") {
       return { message: "User not found", ok: false };
@@ -125,10 +149,13 @@ export const updateUserService = async (
 
 export const deleteUserService = async (
   id: string
-): Promise<IServiceResponse<IUser>> => {
+): Promise<IServiceResponse<ISafeUser>> => {
   try {
-    const deleted = await prisma.user.delete({ where: { id } });
-    return { message: "User deleted successfully", ok: true, data: deleted };
+    const deleted = await prisma.user.delete({
+      where: { id },
+      select: userSafeSelect,
+    });
+    return { message: "User deleted successfully", ok: true, data: deleted as unknown as ISafeUser };
   } catch (error) {
     if ((error as any)?.code === "P2025") {
       return { message: "User not found", ok: false };
