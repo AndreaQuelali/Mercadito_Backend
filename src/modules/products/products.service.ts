@@ -25,6 +25,22 @@ export const createProductService = async (
   }
 };
 
+export const getProductByIdService = async (
+  id: number
+): Promise<IServiceResponse<IProduct | null>> => {
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!product) {
+      return { message: "Product not found", ok: false, data: null };
+    }
+    return { message: "Product fetched", ok: true, data: product };
+  } catch (error) {
+    return { message: "Error fetching product", ok: false, data: null };
+  }
+};
+
 export const listSellerProductsService = async (
   sellerId: string
 ): Promise<IServiceResponse<IProduct[] | null>> => {
@@ -44,7 +60,7 @@ export const listSellerProductsService = async (
 
 export const readProductService = async (
   filter: IProductFilter = {}
-): Promise<IServiceResponse<IProduct[] | null>> => {
+): Promise<IServiceResponse<IProduct[]>> => {
   try {
     const where: any = {};
 
@@ -73,16 +89,9 @@ export const readProductService = async (
       orderBy: { createdAt: "desc" },
     });
 
-    if (Array.isArray(result) && result.length === 0) {
-      return {
-        message: "Products not found",
-        ok: false,
-        data: null,
-      };
-    }
-
+    // Return empty array instead of error when no products match
     return {
-      message: "Products",
+      message: result.length === 0 ? "No products found" : "Products",
       ok: true,
       data: result as unknown as IProduct[],
     };
@@ -90,14 +99,15 @@ export const readProductService = async (
     return {
       message: "Error reading products",
       ok: false,
-      data: null,
+      data: [],
     };
   }
 };
 
 export const updateProductService = async (
   id: number,
-  payload: IUpdateProduct
+  payload: IUpdateProduct,
+  requesterId: string
 ): Promise<IServiceResponse<IProduct | null>> => {
   try {
     const existing = await prisma.product.findUnique({
@@ -107,6 +117,15 @@ export const updateProductService = async (
     if (!existing) {
       return {
         message: "Product not found",
+        ok: false,
+        data: null,
+      };
+    }
+
+    // Ownership check — only the seller who created it can update it
+    if (existing.sellerId !== requesterId) {
+      return {
+        message: "Forbidden: you can only update your own products",
         ok: false,
         data: null,
       };
@@ -132,7 +151,8 @@ export const updateProductService = async (
 };
 
 export const deleteProductService = async (
-  id: number
+  id: number,
+  requesterId: string
 ): Promise<IServiceResponse<IProduct | null>> => {
   try {
     const existing = await prisma.product.findUnique({
@@ -142,6 +162,15 @@ export const deleteProductService = async (
     if (!existing) {
       return {
         message: "Product not found",
+        ok: false,
+        data: null,
+      };
+    }
+
+    // Ownership check — only the seller who created it can delete it
+    if (existing.sellerId !== requesterId) {
+      return {
+        message: "Forbidden: you can only delete your own products",
         ok: false,
         data: null,
       };
