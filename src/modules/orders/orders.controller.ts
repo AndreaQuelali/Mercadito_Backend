@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
-import { getOrderByIdService, listMyOrdersService, updateOrderStatusService } from "./orders.service";
-import { IUpdateOrderStatusDto } from "./dtos/updateStatus.dto";
+import {
+  getOrderByIdService,
+  listMyOrdersService,
+  listSellerOrdersService,
+  updateOrderStatusService,
+} from "./orders.service";
+import { UpdateOrderStatusSchema } from "./schemas/updateOrderStatus.schema";
+import { ENV } from "../../config/env.config";
+import { UserRole } from "@prisma/client";
 
 export const listMyOrders = async (req: Request, res: Response) => {
   try {
@@ -28,11 +35,36 @@ export const getOrderById = async (req: Request, res: Response) => {
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const orderId = Number(req.params.id);
-    const payload = req.body as IUpdateOrderStatusDto;
-    const result = await updateOrderStatusService(orderId, payload);
-    if (!result.ok) return res.status(400).send({ message: result.message, ok: false, status: 400 });
+    const requesterId = req.user?.sub as string;
+    const requesterRole = req.user?.role as UserRole;
+
+    const { success, data, error } = UpdateOrderStatusSchema.safeParse(req.body);
+    if (!success) {
+      return res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+    }
+
+    const result = await updateOrderStatusService(orderId, data, requesterId, requesterRole);
+    if (!result.ok) {
+      const status = result.message.startsWith("Forbidden") ? 403 : 400;
+      return res.status(status).send({ message: result.message, ok: false, status });
+    }
     return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
   } catch (error) {
     return res.status(500).send({ message: "Error updating order status", ok: false, status: 500 });
+  }
+};
+
+export const listSellerOrders = async (req: Request, res: Response) => {
+  try {
+    const sellerId = req.user?.sub as string;
+    const result = await listSellerOrdersService(sellerId);
+    if (!result.ok) return res.status(400).send({ message: result.message, ok: false, status: 400 });
+    return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
+  } catch (error) {
+    return res.status(500).send({ message: "Error fetching seller orders", ok: false, status: 500 });
   }
 };

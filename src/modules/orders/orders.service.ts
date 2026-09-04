@@ -3,6 +3,7 @@ import { IServiceResponse } from "../../types";
 import { IUpdateOrderStatusDto } from "./dtos/updateStatus.dto";
 import { sendOrderConfirmedEmail } from "../../tools/mail.tool";
 import { notifyOrderStatus } from "../../tools/notify.tool";
+import { UserRole } from "@prisma/client";
 
 export async function listMyOrdersService(
   userId: string
@@ -40,9 +41,27 @@ export async function getOrderByIdService(
 
 export async function updateOrderStatusService(
   orderId: number,
-  payload: IUpdateOrderStatusDto
+  payload: IUpdateOrderStatusDto,
+  requesterId: string,
+  requesterRole: UserRole
 ): Promise<IServiceResponse<any>> {
   try {
+    // Sellers may only update orders that contain at least one of their products
+    if (requesterRole === UserRole.seller) {
+      const orderBelongsToSeller = await prisma.order.findFirst({
+        where: {
+          id: orderId,
+          items: { some: { product: { sellerId: requesterId } } },
+        },
+      });
+      if (!orderBelongsToSeller) {
+        return {
+          ok: false,
+          message: "Forbidden: this order does not contain your products",
+        };
+      }
+    }
+
     const updated = await prisma.order.update({
       where: { id: orderId },
       data: { status: payload.status },
