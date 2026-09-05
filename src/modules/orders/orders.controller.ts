@@ -47,7 +47,14 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await updateOrderStatusService(orderId, data, requesterId, requesterRole);
+    const sellerId = (req.user?.sellerId as string | null | undefined) ?? null;
+    const result = await updateOrderStatusService(
+      orderId,
+      data,
+      requesterId,
+      requesterRole,
+      sellerId
+    );
     if (!result.ok) {
       const status = result.message.startsWith("Forbidden") ? 403 : 400;
       return res.status(status).send({ message: result.message, ok: false, status });
@@ -60,8 +67,8 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
 export const listSellerOrders = async (req: Request, res: Response) => {
   try {
-    const sellerId = req.user?.sub as string;
-    const result = await listSellerOrdersService(sellerId);
+    const userId = req.user?.sub as string;
+    const result = await listSellerOrdersService(userId);
     if (!result.ok) return res.status(400).send({ message: result.message, ok: false, status: 400 });
     return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
   } catch (error) {

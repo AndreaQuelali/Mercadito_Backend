@@ -3,7 +3,6 @@ import { ILoginDto } from "./dtos/login.dto";
 import { IForgotPasswordDto } from "./dtos/forgotPassword.dto";
 import { IResetPasswordDto } from "./dtos/resetPassword.dto";
 import { IAuthResponse } from "./interfaces/auth.interfaces";
-import { UserRole as PrismaUserRole } from "@prisma/client";
 import { securePass, validatePassHash } from "../../tools/crypto.tool";
 import { generateAccessToken } from "../../tools/jwt.tool";
 import prisma from "../../config/prisma";
@@ -50,6 +49,7 @@ export const loginService = async (
   try {
     const user = await prisma.user.findUnique({
       where: { email: payload.email },
+      include: { seller: { select: { id: true } } },
     });
     if (!user) {
       return { ok: false, message: "Invalid credentials" };
@@ -64,6 +64,8 @@ export const loginService = async (
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
       sub: user.id,
+      role: user.role,
+      sellerId: user.seller?.id ?? null,
     });
 
     return {

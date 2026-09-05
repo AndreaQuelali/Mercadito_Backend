@@ -14,7 +14,7 @@ import { Category } from "@prisma/client";
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const sellerId = req.user?.sub as string;
+    const sellerId = req.user?.sellerId as string;
     if (!sellerId) {
       return res.status(401).send({ message: "No autorizado", status: 401, ok: false });
     }
@@ -56,7 +56,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const listSellerProducts = async (req: Request, res: Response) => {
   try {
-    const sellerId = req.user?.sub as string;
+    const sellerId = req.user?.sellerId as string;
     if (!sellerId) return res.status(401).send({ ok: false, status: 401, message: "No autorizado" });
     const result = await listSellerProductsService(sellerId);
     if (!result.ok) return res.status(404).send({ ok: false, status: 404, message: result.message });
@@ -121,7 +121,7 @@ export const readProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
   try {
-    const sellerId = req.user?.sub as string;
+    const sellerId = req.user?.sellerId as string;
     const id = Number(req.params.id);
 
     const { success, data, error } = UpdateProductSchema.safeParse(req.body);
@@ -146,7 +146,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const sellerId = req.user?.sub as string;
+    const sellerId = req.user?.sellerId as string;
     const id = Number(req.params.id);
 
     const result = await deleteProductService(id, sellerId);

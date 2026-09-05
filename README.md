@@ -231,10 +231,21 @@ Si se deja vacío, los emails se imprimen en consola (modo desarrollo). Para env
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `POST` | `/auth/register` | Público | Registra un nuevo usuario (rol `client` por defecto) |
-| `POST` | `/auth/login` | Público | Login → retorna JWT |
+| `POST` | `/auth/register` | Público | Registra un nuevo usuario (rol `user` por defecto) |
+| `POST` | `/auth/login` | Público | Login → retorna JWT (`role`, `sellerId`) |
 | `POST` | `/auth/password/forgot` | Público | Solicitar reset de contraseña |
 | `POST` | `/auth/password/reset` | Público | Confirmar nuevo password con token |
+
+### Seller (perfil de vendedor)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/seller` | Usuario autenticado | Crear perfil de vendedor (`status: active`) |
+| `GET` | `/seller/mine` | Seller activo | Ver mi perfil de vendedor |
+| `PATCH` | `/seller/mine` | Seller activo | Editar mi perfil de vendedor |
+| `DELETE` | `/seller/mine` | Seller activo | Eliminar perfil (falla si hay productos) |
+| `GET` | `/seller` | Admin | Listar todos los sellers |
+| `PATCH` | `/seller/:id/status` | Admin | Cambiar status (`active` \| `suspended`) |
 
 ### Productos
 
@@ -242,10 +253,10 @@ Si se deja vacío, los emails se imprimen en consola (modo desarrollo). Para env
 |---|---|---|---|
 | `GET` | `/product` | Público | Listar productos (filtros: `name`, `category`, `minPrice`, `maxPrice`, `startAt`, `endAt`) |
 | `GET` | `/product/:id` | Público | Obtener un producto por ID |
-| `GET` | `/product/mine` | Seller | Listar los productos propios |
-| `POST` | `/product` | Seller | Crear producto |
-| `PUT` | `/product/:id` | Seller (dueño) | Actualizar producto propio |
-| `DELETE` | `/product/:id` | Seller (dueño) | Eliminar producto propio |
+| `GET` | `/product/mine` | Seller activo | Listar los productos propios |
+| `POST` | `/product` | Seller activo | Crear producto |
+| `PUT` | `/product/:id` | Seller activo (dueño) | Actualizar producto propio |
+| `DELETE` | `/product/:id` | Seller activo (dueño) | Eliminar producto propio |
 
 Categorías válidas: `verduras`, `frutas`, `panaderia`, `lacteos`, `artesanias`  
 Unidades válidas: `kilogramo`, `unidad`, `frasco`, `litro`
@@ -267,12 +278,12 @@ Todos los endpoints requieren sesión activa (JWT).
 
 Todos los endpoints requieren sesión activa (JWT).
 
-| Método | Ruta | Roles | Descripción |
+| Método | Ruta | Auth | Descripción |
 |---|---|---|---|
 | `GET` | `/order` | Cualquiera | Mis órdenes |
 | `GET` | `/order/:id` | Cualquiera | Detalle de una orden propia |
-| `GET` | `/order/seller/mine` | Seller | Órdenes que contienen productos del seller |
-| `PATCH` | `/order/:id/status` | Seller / Admin | Actualizar status de una orden |
+| `GET` | `/order/seller/mine` | Seller activo | Órdenes que contienen productos del seller |
+| `PATCH` | `/order/:id/status` | Seller activo / Admin | Actualizar status de una orden |
 
 Estados válidos: `pending` → `paid` → `confirmed` → `shipped` → `delivered` → `cancelled`
 
@@ -284,7 +295,7 @@ Estados válidos: `pending` → `paid` → `confirmed` → `shipped` → `delive
 |---|---|---|---|
 | `GET` | `/user/profile` | Cualquiera | Perfil del usuario autenticado |
 | `GET` | `/user` | Admin | Listar usuarios (filtros: `firstName`, `lastName`, `email`, `role`, `country`, `city`) |
-| `GET` | `/user/:id` | Admin / Seller | Obtener usuario por ID |
+| `GET` | `/user/:id` | Autenticado | Obtener usuario por ID |
 | `PATCH` | `/user/:id` | Admin | Actualizar datos de usuario |
 | `DELETE` | `/user/:id` | Admin | Eliminar usuario |
 
@@ -307,20 +318,23 @@ El sistema usa **JWT (Bearer token)**. Incluye el token en cada request protegid
 Authorization: Bearer <tu_token>
 ```
 
-### Roles
+### Roles y capacidades
 
-| Rol | Cómo obtenerlo | Capacidades principales |
+| Rol / perfil | Cómo obtenerlo | Capacidades principales |
 |---|---|---|
-| `client` | Registro por defecto | Comprar, reseñar productos entregados |
-| `seller` | Asignar desde Prisma Studio o admin | Publicar productos, gestionar sus órdenes |
-| `admin` | Asignar desde Prisma Studio | Gestión completa de usuarios |
+| `user` | Registro por defecto | Comprar, carrito, reseñas de productos entregados |
+| Perfil `Seller` | `POST /seller` | Publicar productos, gestionar órdenes de venta |
+| `admin` | Asignar desde Prisma Studio | Gestión de usuarios y sellers (no vende) |
 
-Para asignar rol `seller` a un usuario durante el desarrollo, usa Prisma Studio:
+Cualquier usuario autenticado puede comprar. Para vender hay que crear un perfil Seller:
 
 ```bash
-npx prisma studio
-# Ir a la tabla User → editar el campo role
+POST /seller
+Authorization: Bearer <jwt>
+{ "businessName": "Puesto de Ana", "description": "...", "location": "Pasillo 3" }
 ```
+
+Luego vuelve a iniciar sesión para obtener un JWT con `sellerId`.
 
 ---
 

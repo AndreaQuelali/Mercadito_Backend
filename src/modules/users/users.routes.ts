@@ -23,13 +23,8 @@ userRouter.get(
   getUsers
 );
 
-// Get user by id — admin or seller
-userRouter.get(
-  "/:id",
-  validateSesionUser,
-  userRoleValidation(UserRole.admin, UserRole.seller),
-  getUserById
-);
+// Get user by id — authenticated users
+userRouter.get("/:id", validateSesionUser, getUserById);
 
 // Update user — admin only
 userRouter.patch(

@@ -35,7 +35,7 @@ export const createUserService = async (
     const user = await prisma.user.create({
       data: {
         ...payload,
-        role: (payload.role as any) ?? UserRole.client,
+        role: (payload.role as any) ?? UserRole.user,
       },
       select: userSafeSelect,
     });

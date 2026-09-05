@@ -34,10 +34,12 @@ vi.mock("../tools/passwordReset.tool", () => ({
 import { registerService, loginService } from "../modules/auth/auth.service";
 import prisma from "../config/prisma";
 import { securePass, validatePassHash } from "../tools/crypto.tool";
+import { generateAccessToken } from "../tools/jwt.tool";
 
 const db = prisma as any;
 const mockSecurePass = securePass as ReturnType<typeof vi.fn>;
 const mockValidatePass = validatePassHash as ReturnType<typeof vi.fn>;
+const mockGenerateToken = generateAccessToken as ReturnType<typeof vi.fn>;
 
 const registerPayload = {
   firstName: "Ana",
@@ -48,7 +50,7 @@ const registerPayload = {
   phoneCountryCode: "+52",
   country: "México",
   city: "CDMX",
-  role: "client" as any,
+  role: "user" as any,
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -98,6 +100,8 @@ describe("loginService", () => {
       password: "$2b$10$hashedpassword",
       firstName: "Ana",
       lastName: "García",
+      role: "user",
+      seller: null,
     });
     mockValidatePass.mockResolvedValue(true);
 
@@ -108,6 +112,13 @@ describe("loginService", () => {
 
     expect(result.ok).toBe(true);
     expect((result as any).data?.token).toBe("mock.jwt.token");
+    expect(mockGenerateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sub: "uuid-1",
+        role: "user",
+        sellerId: null,
+      })
+    );
   });
 
   it("should reject login when user does not exist", async () => {

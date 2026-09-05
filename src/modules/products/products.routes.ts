@@ -8,8 +8,10 @@ import {
   listSellerProducts,
 } from "./products.controller";
 import { validateSesionUser } from "../../middleware/userSesion.middleware";
-import { userRoleValidation } from "../../middleware/userRole.middleware";
-import { UserRole } from "@prisma/client";
+import {
+  requiresActiveSeller,
+  requiresSeller,
+} from "../../middleware/userRole.middleware";
 
 const productRouter = Router();
 
@@ -20,7 +22,7 @@ productRouter.get("/", readProduct);
 productRouter.get(
   "/mine",
   validateSesionUser,
-  userRoleValidation(UserRole.seller),
+  requiresSeller,
   listSellerProducts
 );
 
@@ -31,7 +33,7 @@ productRouter.get("/:id", getProductById);
 productRouter.post(
   "/",
   validateSesionUser,
-  userRoleValidation(UserRole.seller),
+  requiresActiveSeller,
   createProduct
 );
 
@@ -39,7 +41,7 @@ productRouter.post(
 productRouter.put(
   "/:id",
   validateSesionUser,
-  userRoleValidation(UserRole.seller),
+  requiresActiveSeller,
   updateProduct
 );
 
@@ -47,7 +49,7 @@ productRouter.put(
 productRouter.delete(
   "/:id",
   validateSesionUser,
-  userRoleValidation(UserRole.seller),
+  requiresActiveSeller,
   deleteProduct
 );
 
