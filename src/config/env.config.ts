@@ -24,8 +24,8 @@ export const ENV = {
     REDIS_PORT: process.env.REDIS_PORT || 6379,
     /** Frontend origin for CORS (comma-separated list or * for all) */
     CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
-    /** Base URL used in password-reset emails */
-    APP_URL: process.env.APP_URL || "http://localhost:3000",
+    /** Frontend base URL used in password-reset emails */
+    APP_URL: process.env.APP_URL || "http://localhost:4200",
     // SMTP settings — leave empty to use console-log fallback in dev
     SMTP_HOST: process.env.SMTP_HOST || "",
     SMTP_PORT: Number(process.env.SMTP_PORT) || 587,
