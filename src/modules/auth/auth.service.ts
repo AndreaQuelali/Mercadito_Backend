@@ -3,12 +3,13 @@ import { ILoginDto } from "./dtos/login.dto";
 import { IForgotPasswordDto } from "./dtos/forgotPassword.dto";
 import { IResetPasswordDto } from "./dtos/resetPassword.dto";
 import { IAuthResponse } from "./interfaces/auth.interfaces";
-import { UserRole as PrismaUserRole } from "@prisma/client";
 import { securePass, validatePassHash } from "../../tools/crypto.tool";
 import { generateAccessToken } from "../../tools/jwt.tool";
 import prisma from "../../config/prisma";
 import { enqueueMail } from "../../tools/mailQueue.tool";
+import { buildPasswordResetEmail } from "../../tools/mailTemplates.tool";
 import { createResetToken, deleteResetToken, getUserIdByResetToken } from "../../tools/passwordReset.tool";
+import { ENV } from "../../config/env.config";
 
 export const registerService = async (
   payload: IRegisterDto
@@ -50,6 +51,7 @@ export const loginService = async (
   try {
     const user = await prisma.user.findUnique({
       where: { email: payload.email },
+      include: { seller: { select: { id: true } } },
     });
     if (!user) {
       return { ok: false, message: "Invalid credentials" };
@@ -64,6 +66,8 @@ export const loginService = async (
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
       sub: user.id,
+      role: user.role,
+      sellerId: user.seller?.id ?? null,
     });
 
     return {
@@ -87,12 +91,14 @@ export const forgotPasswordService = async (
     }
 
     const token = await createResetToken(user.id);
-    const resetUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
+    const resetUrl = `${ENV.APP_URL}/reset-password?token=${token}`;
+    const mail = buildPasswordResetEmail(resetUrl);
 
     await enqueueMail({
       to: user.email,
-      subject: "Restablecer contraseña",
-      text: `Usa este enlace para restablecer tu contraseña: ${resetUrl} (válido por 15 minutos)`,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
     });
 
     return { ok: true, message: "If the email exists, a reset link was sent" };

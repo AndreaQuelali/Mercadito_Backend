@@ -3,6 +3,7 @@ import { IServiceResponse } from "../../types";
 import { IUpdateOrderStatusDto } from "./dtos/updateStatus.dto";
 import { sendOrderConfirmedEmail } from "../../tools/mail.tool";
 import { notifyOrderStatus } from "../../tools/notify.tool";
+import { UserRole } from "@prisma/client";
 
 export async function listMyOrdersService(
   userId: string
@@ -40,23 +41,51 @@ export async function getOrderByIdService(
 
 export async function updateOrderStatusService(
   orderId: number,
-  payload: IUpdateOrderStatusDto
+  payload: IUpdateOrderStatusDto,
+  requesterId: string,
+  requesterRole: UserRole,
+  sellerId?: string | null
 ): Promise<IServiceResponse<any>> {
   try {
+    // Non-admin sellers may only update orders that contain their products
+    if (requesterRole !== UserRole.admin) {
+      const orderBelongsToSeller = await prisma.order.findFirst({
+        where: {
+          id: orderId,
+          items: {
+            some: {
+              product: sellerId
+                ? { sellerId }
+                : { seller: { userId: requesterId } },
+            },
+          },
+        },
+      });
+      if (!orderBelongsToSeller) {
+        return {
+          ok: false,
+          message: "Forbidden: this order does not contain your products",
+        };
+      }
+    }
+
     const updated = await prisma.order.update({
       where: { id: orderId },
       data: { status: payload.status },
-      include: { items: { include: { product: true } }, user: true },
+      include: {
+        items: { include: { product: { include: { seller: true } } } },
+        user: true,
+      },
     });
     if (payload.status === "confirmed") {
       await sendOrderConfirmedEmail(updated.user.email, updated.id);
       await notifyOrderStatus(updated.userId, updated.id, payload.status);
-      const sellerIds = Array.from(
-        new Set(updated.items.map((i: any) => i.product.sellerId))
+      const sellerUserIds = Array.from(
+        new Set(updated.items.map((i: any) => i.product.seller.userId))
       );
       await Promise.all(
-        sellerIds.map((sid) =>
-          notifyOrderStatus(sid, updated.id, payload.status)
+        sellerUserIds.map((uid) =>
+          notifyOrderStatus(uid, updated.id, payload.status)
         )
       );
     }
@@ -69,12 +98,12 @@ export async function updateOrderStatusService(
 }
 
 export async function listSellerOrdersService(
-  sellerId: string
+  userId: string
 ): Promise<IServiceResponse<any[]>> {
   try {
     const orders = await prisma.order.findMany({
       where: {
-        items: { some: { product: { sellerId } } },
+        items: { some: { product: { seller: { userId } } } },
       },
       orderBy: { createdAt: "desc" },
       include: { items: { include: { product: true } }, user: true },

@@ -11,7 +11,6 @@ export const securePass = async (pws: string): Promise<string | undefined> => {
           console.error('Error on secure pass', err);
           reject(err);
         } else {
-          console.log('Secure pass', hash);
           resolve(hash);
         }
       });

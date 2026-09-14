@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
 import router from "./config/server.routes";
 import { prisma } from "./config/prisma";
@@ -14,6 +15,15 @@ async function init() {
 
         const PORT = ENV.PORT || 3000;
         const app = express();
+
+        // CORS — allow configured origin(s) for browser clients
+        app.use(cors({
+            origin: ENV.CORS_ORIGIN === "*" ? "*" : ENV.CORS_ORIGIN.split(",").map(o => o.trim()),
+            methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            allowedHeaders: ["Content-Type", "Authorization"],
+            credentials: ENV.CORS_ORIGIN !== "*",
+        }));
+
         app.use(bodyParser.json());
         app.use("/", router);
 

@@ -1,8 +1,44 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
+
+# ── Build output ──────────────────────────────────────────────────────────────
+dist/
+*.tsbuildinfo
+
+# ── Environment variables ─────────────────────────────────────────────────────
+# Only .env.example should be committed
+.env
+.env.*
+!.env.example
+
+# ── Docker volumes ────────────────────────────────────────────────────────────
 database/
 redis/
-.DS_Store
 
-.env
+# ── Test & coverage reports ───────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
 .vscode/
-dist/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── Prisma generated engine binaries (downloaded on install) ──────────────────
+# node_modules/.prisma and node_modules/.cache are covered by node_modules/ above
