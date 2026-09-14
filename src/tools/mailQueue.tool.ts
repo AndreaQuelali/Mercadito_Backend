@@ -30,14 +30,30 @@ export function initMailWorker() {
       // Use nodemailer when SMTP is configured; fall back to console log in dev
       if (ENV.SMTP_HOST) {
         const nodemailer = await import("nodemailer");
+        const hasAuth = Boolean(ENV.SMTP_USER && ENV.SMTP_PASS);
+        const isLocalSmtp =
+          ENV.SMTP_HOST === "localhost" ||
+          ENV.SMTP_HOST === "127.0.0.1" ||
+          ENV.SMTP_HOST === "mailpit";
         const transporter = nodemailer.createTransport({
           host: ENV.SMTP_HOST,
           port: ENV.SMTP_PORT,
           secure: ENV.SMTP_PORT === 465,
-          auth: {
-            user: ENV.SMTP_USER,
-            pass: ENV.SMTP_PASS,
-          },
+          // Mailpit uses plain SMTP / self-signed STARTTLS in local Docker
+          ...(isLocalSmtp
+            ? {
+                ignoreTLS: true,
+                tls: { rejectUnauthorized: false },
+              }
+            : {}),
+          ...(hasAuth
+            ? {
+                auth: {
+                  user: ENV.SMTP_USER,
+                  pass: ENV.SMTP_PASS,
+                },
+              }
+            : {}),
         });
 
         await transporter.sendMail({
