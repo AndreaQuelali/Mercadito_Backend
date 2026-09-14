@@ -192,8 +192,8 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 | `PORT` | No | Puerto del servidor (default: `3000`) |
 | `JWT_SECRET` | **Sí** | Secreto para firmar los JWT. Usar un valor aleatorio fuerte. |
 | `SALTS` | No | Rounds de bcrypt (default: `10`, rango válido: 1–31) |
-| `APP_URL` | No | URL base para los links de reset de contraseña |
-| `CORS_ORIGIN` | No | Origen permitido para CORS. Ej: `http://localhost:5173`. Usar `*` solo en dev. |
+| `APP_URL` | No | URL base del frontend para links de reset (dev: `http://localhost:4200`) |
+| `CORS_ORIGIN` | No | Origen permitido para CORS. Ej: `http://localhost:4200`. Usar `*` solo en dev. |
 
 ### Redis
 
@@ -205,17 +205,27 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 > Si el backend corre en tu máquina y Redis en Docker: `REDIS_HOST=localhost`.  
 > Si ambos corren dentro de Docker en la misma red: `REDIS_HOST=redis`.
 
-### Email SMTP (opcional)
+### Email SMTP (desarrollo con Mailpit)
 
-Si se deja vacío, los emails se imprimen en consola (modo desarrollo). Para enviar emails reales, configura un proveedor SMTP:
+En desarrollo, el `.env.example` apunta a **Mailpit** (servicio en `docker-compose.yaml`):
 
-| Variable | Descripción |
-|---|---|
-| `SMTP_HOST` | Servidor SMTP (ej: `smtp.gmail.com`, `smtp.resend.com`) |
-| `SMTP_PORT` | Puerto SMTP (ej: `587` para TLS, `465` para SSL) |
-| `SMTP_USER` | Usuario / dirección del remitente |
-| `SMTP_PASS` | Contraseña o App Password del proveedor |
-| `SMTP_FROM` | Dirección "From" de los emails |
+| Variable | Valor típico (dev) | Descripción |
+|---|---|---|
+| `SMTP_HOST` | `localhost` | Host SMTP. Vacío = emails solo en consola |
+| `SMTP_PORT` | `1027` | Puerto host mapeado a Mailpit (`1027:1025`) |
+| `SMTP_USER` | *(vacío)* | Mailpit no exige auth |
+| `SMTP_PASS` | *(vacío)* | Mailpit no exige auth |
+| `SMTP_FROM` | `Mercadito <noreply@mercadito.app>` | Remitente |
+
+```bash
+# Desde Mercadito_Backend/
+docker compose up -d mailpit
+# Inbox UI → http://localhost:8027
+```
+
+Los puertos host `1027` (SMTP) y `8027` (UI) evitan choques con otros Mailpit locales en `1025`/`1026`.
+
+Para un proveedor real (staging/producción), configura `SMTP_*` con ese servicio (ej. Resend, SES).
 
 ---
 
@@ -369,8 +379,9 @@ socket.on("order:status", (payload) => {
 
 Las notificaciones de email (confirmación de orden, reset de contraseña) usan BullMQ para encolarse y enviarse en segundo plano.
 
-- **Sin SMTP configurado** (desarrollo): los emails se imprimen en la consola del servidor.
-- **Con SMTP configurado** (producción): rellena las variables `SMTP_*` en `.env` para activar el envío real.
+- **Sin `SMTP_HOST`**: los emails se imprimen en la consola del servidor.
+- **Desarrollo con Mailpit**: `docker compose up -d mailpit`, UI en `http://localhost:8027`, SMTP en `localhost:1027` (ver `.env.example`). Flujo típico: `POST /auth/password/forgot` → correo en la inbox de Mailpit → link a `http://localhost:4200/reset-password?token=...`.
+- **Producción / staging**: configura `SMTP_*` con un proveedor real (Resend, SES, etc.).
 
 ---
 
@@ -403,6 +414,7 @@ Mercadito_Backend/
 │   │   └── healthCheck/             # GET /health
 │   ├── tools/
 │   │   ├── mailQueue.tool.ts        # BullMQ + nodemailer
+│   │   ├── mailTemplates.tool.ts    # HTML/text de emails transaccionales
 │   │   ├── passwordReset.tool.ts    # Tokens Redis
 │   │   ├── notify.tool.ts           # Emitir eventos Socket.IO
 │   │   ├── crypto.tool.ts           # bcrypt

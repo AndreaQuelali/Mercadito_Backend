@@ -18,4 +18,11 @@ services:
       - ${REDIS_PORT}:6379
     volumes:
       - ./redis:/data
-    
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit-mercadito
+    ports:
+      # Host 1027/8027 avoid clash with other local Mailpit on 1025/1026
+      - "1027:1025"
+      - "8027:8025"
+    restart: unless-stopped
