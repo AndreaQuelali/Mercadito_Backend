@@ -194,6 +194,7 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 | `SALTS` | No | Rounds de bcrypt (default: `10`, rango válido: 1–31) |
 | `APP_URL` | No | URL base del frontend para links de reset (dev: `http://localhost:4200`) |
 | `CORS_ORIGIN` | No | Origen permitido para CORS. Ej: `http://localhost:4200`. Usar `*` solo en dev. |
+| `LOW_STOCK_THRESHOLD` | No | Stock a partir del cual una venta dispara `stock:low` al vendedor (default: `5`; entero ≥ 0) |
 
 ### Redis
 
@@ -373,6 +374,31 @@ socket.on("order:status", (payload) => {
 
 > El servidor rechaza la conexión si el token es inválido o está expirado.
 
+### Eventos
+
+Todos se emiten a la sala personal `user:<id>` y además se guardan en el historial (ver [Notificaciones](#notificaciones)).
+
+| Evento | Destinatario | Cuándo | Payload |
+|---|---|---|---|
+| `order:status` | Comprador y vendedores del pedido | Un pedido pasa a `confirmed` | `{ orderId, status }` |
+| `order:new` | Cada vendedor involucrado | Checkout exitoso (solo sus ítems) | `{ orderId, items: [{ productId, name, quantity }] }` |
+| `stock:low` | Vendedor del producto | Tras una venta, el stock queda ≤ `LOW_STOCK_THRESHOLD` (incluye `0`) | `{ productId, name, stock, threshold }` |
+| `review:new` | Vendedor del producto | Se crea una reseña | `{ productId, name, rating }` |
+
+Las notificaciones son *best-effort*: si el socket no está inicializado o falla el guardado del historial, el flujo de negocio (checkout, reseña) no se interrumpe.
+
+### Notificaciones
+
+Historial persistente de los eventos anteriores. Todas las rutas requieren JWT y solo devuelven las notificaciones del usuario autenticado.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/notification` | Listar (más recientes primero). Query: `page` (default `1`), `limit` (default `20`, máx. `50`), `unread=true` |
+| `PATCH` | `/notification/read-all` | Marcar todas como leídas |
+| `PATCH` | `/notification/:id/read` | Marcar una como leída (`404` si no es del usuario) |
+
+La respuesta de `GET /notification` incluye `data: { items, total, unread, page, limit }`.
+
 ---
 
 ## 13. Email
@@ -411,12 +437,13 @@ Mercadito_Backend/
 │   │   ├── carts/                   # Carrito + checkout
 │   │   ├── orders/                  # Órdenes del buyer y seller
 │   │   ├── reviews/                 # Reseñas post-entrega
+│   │   ├── notifications/           # Historial de notificaciones
 │   │   └── healthCheck/             # GET /health
 │   ├── tools/
 │   │   ├── mailQueue.tool.ts        # BullMQ + nodemailer
 │   │   ├── mailTemplates.tool.ts    # HTML/text de emails transaccionales
 │   │   ├── passwordReset.tool.ts    # Tokens Redis
-│   │   ├── notify.tool.ts           # Emitir eventos Socket.IO
+│   │   ├── notify.tool.ts           # Guardar y emitir notificaciones (Socket.IO)
 │   │   ├── crypto.tool.ts           # bcrypt
 │   │   └── jwt.tool.ts              # Generación de tokens
 │   └── __tests__/                   # Tests con Vitest

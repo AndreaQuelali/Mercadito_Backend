@@ -26,6 +26,12 @@ export const ENV = {
     CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
     /** Frontend base URL used in password-reset emails */
     APP_URL: process.env.APP_URL || "http://localhost:4200",
+    /** A seller gets a stock:low event when a sale leaves a product at or below this stock */
+    LOW_STOCK_THRESHOLD: (() => {
+        const raw = process.env.LOW_STOCK_THRESHOLD;
+        const n = raw === undefined || raw === "" ? NaN : Number(raw);
+        return Number.isInteger(n) && n >= 0 ? n : 5;
+    })(),
     // SMTP settings — leave empty to use console-log fallback in dev
     SMTP_HOST: process.env.SMTP_HOST || "",
     SMTP_PORT: Number(process.env.SMTP_PORT) || 587,

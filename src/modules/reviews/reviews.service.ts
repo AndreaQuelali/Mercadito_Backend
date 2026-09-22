@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma";
 import { IServiceResponse } from "../../types";
 import { ICreateReviewDto } from "./dtos/createReview.dto";
+import { notifyNewReview } from "../../tools/notify.tool";
 
 export async function createReviewService(
   userId: string,
@@ -30,6 +31,8 @@ export async function createReviewService(
     const review = await prisma.review.create({
       data: { userId, productId, rating, comment },
     });
+
+    await notifyNewReview(productId, rating);
 
     return { ok: true, message: "Review created", data: review };
   } catch (error: any) {

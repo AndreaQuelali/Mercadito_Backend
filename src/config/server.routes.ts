@@ -7,6 +7,7 @@ import cartRouter from "../modules/carts/carts.routes";
 import orderRouter from "../modules/orders/orders.routes";
 import reviewRouter from "../modules/reviews/reviews.routes";
 import sellerRouter from "../modules/sellers/sellers.routes";
+import notificationRouter from "../modules/notifications/notifications.routes";
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.use("/cart", cartRouter);
 router.use("/order", orderRouter);
 router.use("/review", reviewRouter);
 router.use("/seller", sellerRouter);
+router.use("/notification", notificationRouter);
 
 router.use((req: Request, res: Response) => {
   res.status(404).send({ message: "Not Found", status: 404, ok: false });

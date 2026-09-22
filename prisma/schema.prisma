@@ -53,8 +53,22 @@ model User {
   // Relations
   carts   Cart[]
   orders  Order[]
-  reviews Review[]
-  seller  Seller?
+  reviews       Review[]
+  seller        Seller?
+  notifications Notification[]
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    String
+  type      String // order:status | order:new | stock:low | review:new
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
 }
 
 model Seller {

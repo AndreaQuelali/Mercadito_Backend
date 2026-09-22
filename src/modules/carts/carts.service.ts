@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma";
 import { IServiceResponse } from "../../types";
 import { IAddToCartDto } from "./dtos/addToCart.dto";
+import { ISaleLine, notifyOrderCreated } from "../../tools/notify.tool";
 
 export async function getOrCreateCart(userId: string) {
   let cart = await prisma.cart.findFirst({ where: { userId } });
@@ -176,6 +177,9 @@ export async function checkoutService(
   userId: string
 ): Promise<IServiceResponse<any>> {
   try {
+    // Filled inside the transaction, dispatched only after it commits
+    const sales: ISaleLine[] = [];
+
     const result = await prisma.$transaction(async (tx) => {
       const cart = await tx.cart.findFirst({
         where: { userId },
@@ -210,6 +214,7 @@ export async function checkoutService(
       for (const item of cart.items) {
         const p = await tx.product.findUnique({
           where: { id: item.productId },
+          include: { seller: { select: { userId: true } } },
         });
         await tx.orderItem.create({
           data: {
@@ -223,6 +228,13 @@ export async function checkoutService(
           where: { id: p!.id },
           data: { stock: p!.stock - item.quantity },
         });
+        sales.push({
+          sellerUserId: p!.seller?.userId,
+          productId: p!.id,
+          name: p!.name,
+          quantity: item.quantity,
+          stock: p!.stock - item.quantity,
+        });
       }
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
@@ -233,6 +245,15 @@ export async function checkoutService(
         data: order,
       } as IServiceResponse<any>;
     });
+
+    if (result.ok) {
+      // Notifications are best-effort: they must never fail a committed order
+      try {
+        await notifyOrderCreated(result.data.id, sales);
+      } catch {
+        console.log(`[notify:fallback] order:new for order ${result.data?.id} not delivered`);
+      }
+    }
 
     return result;
   } catch (error) {
