@@ -357,7 +357,7 @@ El servidor Socket.IO comparte el mismo puerto HTTP. La conexión **requiere aut
 
 ```js
 const socket = io("http://localhost:3000", {
-  auth: { token: "Bearer <tu_jwt>" },
+  auth: { token: "<tu_jwt>" }, // JWT sin el prefijo "Bearer " (con header Authorization sí lleva "Bearer ")
   transports: ["websocket"],
 });
 
