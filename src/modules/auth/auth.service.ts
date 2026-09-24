@@ -10,6 +10,12 @@ import { enqueueMail } from "../../tools/mailQueue.tool";
 import { buildPasswordResetEmail } from "../../tools/mailTemplates.tool";
 import { createResetToken, deleteResetToken, getUserIdByResetToken } from "../../tools/passwordReset.tool";
 import { ENV } from "../../config/env.config";
+import { UserRole } from "@prisma/client";
+import {
+  issueRefreshToken,
+  revokeRefreshToken,
+  rotateRefreshToken,
+} from "../../tools/refreshToken.tool";
 
 export const registerService = async (
   payload: IRegisterDto
@@ -62,23 +68,88 @@ export const loginService = async (
       return { ok: false, message: "Invalid credentials" };
     }
 
-    const token = generateAccessToken({
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
-      sub: user.id,
-      role: user.role,
-      sellerId: user.seller?.id ?? null,
-    });
+    const token = signAccessToken(user);
+    const refreshToken = await issueRefreshToken(user.id);
 
     return {
       ok: true,
       message: "Login successful",
-      data: { id: user.id, email: user.email, token },
+      data: { id: user.id, email: user.email, token, refreshToken },
     };
   } catch (error) {
     return { ok: false, message: "Error logging in" };
   }
 };
+
+const INVALID_REFRESH = "Invalid or expired refresh token";
+
+/** Exchanges a refresh token for a new access token and a rotated refresh token. */
+export const refreshService = async (
+  refreshToken: string
+): Promise<IAuthResponse> => {
+  try {
+    const rotated = await rotateRefreshToken(refreshToken);
+    if (!rotated.ok) {
+      if (rotated.reason === "reused") {
+        console.warn("[auth] Refresh token reuse detected: session revoked");
+      }
+      return { ok: false, status: 401, message: INVALID_REFRESH };
+    }
+
+    // Claims (role, sellerId) are rebuilt from the database, so changes apply on refresh
+    const user = await prisma.user.findUnique({
+      where: { id: rotated.userId },
+      include: { seller: { select: { id: true } } },
+    });
+    if (!user) {
+      await revokeRefreshToken(rotated.token);
+      return { ok: false, status: 401, message: INVALID_REFRESH };
+    }
+
+    return {
+      ok: true,
+      message: "Token refreshed",
+      data: {
+        id: user.id,
+        email: user.email,
+        token: signAccessToken(user),
+        refreshToken: rotated.token,
+      },
+    };
+  } catch (error) {
+    // Not a 401: a transient failure must not make clients drop a valid session
+    return { ok: false, status: 500, message: "Error refreshing session" };
+  }
+};
+
+/** Ends the session. Idempotent: it never fails for the client. */
+export const logoutService = async (
+  refreshToken: string
+): Promise<IAuthResponse> => {
+  try {
+    await revokeRefreshToken(refreshToken);
+  } catch (error) {
+    console.error("[auth] Could not revoke refresh token", error);
+  }
+  return { ok: true, message: "Logged out" };
+};
+
+function signAccessToken(user: {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  seller?: { id: string } | null;
+}) {
+  return generateAccessToken({
+    email: user.email,
+    name: `${user.firstName} ${user.lastName}`,
+    sub: user.id,
+    role: user.role,
+    sellerId: user.seller?.id ?? null,
+  });
+}
 
 export const forgotPasswordService = async (
   _payload: IForgotPasswordDto

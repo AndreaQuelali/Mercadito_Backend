@@ -191,6 +191,8 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 |---|---|---|
 | `PORT` | No | Puerto del servidor (default: `3000`) |
 | `JWT_SECRET` | **Sí** | Secreto para firmar los JWT. Usar un valor aleatorio fuerte. |
+| `ACCESS_TOKEN_TTL` | No | Vida del access token, formato `jsonwebtoken` (default: `15m`) |
+| `REFRESH_TOKEN_TTL_SECONDS` | No | Vida de la sesión / refresh token en segundos (default: `604800`, 7 días) |
 | `SALTS` | No | Rounds de bcrypt (default: `10`, rango válido: 1–31) |
 | `APP_URL` | No | URL base del frontend para links de reset (dev: `http://localhost:4200`) |
 | `CORS_ORIGIN` | No | Origen permitido para CORS. Ej: `http://localhost:4200`. Usar `*` solo en dev. |
@@ -243,7 +245,9 @@ Para un proveedor real (staging/producción), configura `SMTP_*` con ese servici
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
 | `POST` | `/auth/register` | Público | Registra un nuevo usuario (rol `user` por defecto) |
-| `POST` | `/auth/login` | Público | Login → retorna JWT (`role`, `sellerId`) |
+| `POST` | `/auth/login` | Público | Login → retorna `token` (JWT de acceso, 15 min) y `refreshToken` |
+| `POST` | `/auth/refresh` | Público | Body `{ "refreshToken" }` → nuevo `token` + nuevo `refreshToken` (rotativo). `401` si es inválido, expirado o ya usado |
+| `POST` | `/auth/logout` | Público | Body `{ "refreshToken" }` → revoca la sesión (idempotente) |
 | `POST` | `/auth/password/forgot` | Público | Solicitar reset de contraseña |
 | `POST` | `/auth/password/reset` | Público | Confirmar nuevo password con token |
 
@@ -329,6 +333,15 @@ El sistema usa **JWT (Bearer token)**. Incluye el token en cada request protegid
 Authorization: Bearer <tu_token>
 ```
 
+### Sesión: access token + refresh token
+
+- El **access token** (JWT) dura **15 minutos** (`ACCESS_TOKEN_TTL`) y se envía en `Authorization: Bearer`.
+- El **refresh token** es opaco, dura **7 días** (`REFRESH_TOKEN_TTL_SECONDS`) y se guarda en Redis solo como hash.
+- Cada `POST /auth/refresh` **rota** el refresh token: el anterior deja de servir. Usar un refresh token ya usado se interpreta como robo y **revoca toda esa sesión**.
+- Los datos del access token (`role`, `sellerId`) se recalculan desde la base de datos en cada refresh, así que un cambio como crear el perfil Seller se refleja sin volver a iniciar sesión.
+- Si Redis falla, `/auth/refresh` responde `500` (no `401`), para que los clientes no descarten una sesión válida.
+- Dos refresh simultáneos con el mismo token (por ejemplo, dos pestañas a la vez) cuentan como reutilización y cierran la sesión. El frontend evita esto compartiendo un único refresh en curso.
+
 ### Roles y capacidades
 
 | Rol / perfil | Cómo obtenerlo | Capacidades principales |
@@ -345,7 +358,7 @@ Authorization: Bearer <jwt>
 { "businessName": "Puesto de Ana", "description": "...", "location": "Pasillo 3" }
 ```
 
-Luego vuelve a iniciar sesión para obtener un JWT con `sellerId`.
+La respuesta incluye un JWT nuevo con `sellerId`; si el cliente no lo guarda, el siguiente `POST /auth/refresh` lo trae.
 
 ---
 

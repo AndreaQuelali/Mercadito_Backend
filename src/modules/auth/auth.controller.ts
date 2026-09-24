@@ -4,7 +4,10 @@ import {
   loginService,
   forgotPasswordService,
   resetPasswordService,
+  refreshService,
+  logoutService,
 } from "./auth.service";
+import { RefreshSchema } from "./schemas/refresh.schema";
 import { LoginSchema } from "./schemas/login.schema";
 import { RegisterSchema } from "./schemas/register.schema";
 import { ForgotPasswordSchema } from "./schemas/forgotPassword.schema";
@@ -67,6 +70,49 @@ export const login = async (req: Request, res: Response) => {
       ...result,
       status: result.ok ? 200 : 401,
     });
+  } catch (error) {
+    res
+      .status(500)
+      .send({ message: "Internal server error", status: 500, ok: false });
+  }
+};
+
+export const refresh = async (req: Request, res: Response) => {
+  try {
+    const { success, data, error } = RefreshSchema.safeParse(req.body);
+    if (!success) {
+      res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+      return;
+    }
+
+    const result = await refreshService(data.refreshToken);
+    const status = result.status ?? (result.ok ? 200 : 401);
+    res.status(status).send({ ...result, status });
+  } catch (error) {
+    res
+      .status(500)
+      .send({ message: "Internal server error", status: 500, ok: false });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const { success, data, error } = RefreshSchema.safeParse(req.body);
+    if (!success) {
+      res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+      return;
+    }
+
+    const result = await logoutService(data.refreshToken);
+    res.status(200).send({ ...result, status: 200 });
   } catch (error) {
     res
       .status(500)

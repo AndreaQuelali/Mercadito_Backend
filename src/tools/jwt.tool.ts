@@ -16,7 +16,7 @@ export function generateAccessToken (payload: IAuthPayload) {
     payload,
     ENV.JWT_SECRET,
     {
-      expiresIn: '1d',
+      expiresIn: ENV.ACCESS_TOKEN_TTL as jwt.SignOptions['expiresIn'],
       algorithm: 'HS256'
     }
   )

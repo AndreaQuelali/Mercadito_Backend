@@ -19,6 +19,12 @@ vi.mock("../tools/jwt.tool", () => ({
   generateAccessToken: vi.fn().mockReturnValue("mock.jwt.token"),
 }));
 
+vi.mock("../tools/refreshToken.tool", () => ({
+  issueRefreshToken: vi.fn().mockResolvedValue("mock-refresh-token"),
+  rotateRefreshToken: vi.fn(),
+  revokeRefreshToken: vi.fn(),
+}));
+
 vi.mock("../tools/mailQueue.tool", () => ({
   enqueueMail: vi.fn().mockResolvedValue(undefined),
   mailQueue: {},
@@ -112,6 +118,7 @@ describe("loginService", () => {
 
     expect(result.ok).toBe(true);
     expect((result as any).data?.token).toBe("mock.jwt.token");
+    expect((result as any).data?.refreshToken).toBe("mock-refresh-token");
     expect(mockGenerateToken).toHaveBeenCalledWith(
       expect.objectContaining({
         sub: "uuid-1",

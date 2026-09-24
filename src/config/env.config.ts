@@ -17,6 +17,12 @@ export const ENV = {
     NODE_ENV: process.env.NODE_ENV || "development",
     /** IMPORTANT: always set a strong secret in production */
     JWT_SECRET: process.env.JWT_SECRET || "secretKey",
+    /** Access token lifetime (jsonwebtoken format: "15m", "1h"...). Kept short; sessions last via refresh tokens */
+    ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || "15m",
+    /** Refresh token / session lifetime in seconds (default 7 days) */
+    REFRESH_TOKEN_TTL_SECONDS: Number(process.env.REFRESH_TOKEN_TTL_SECONDS) > 0
+        ? Number(process.env.REFRESH_TOKEN_TTL_SECONDS)
+        : 60 * 60 * 24 * 7,
     PWD_SECRET: process.env.PWD_SECRET || "secretPwd",
     /** bcrypt rounds — valid range 1-31; 10-12 recommended */
     SALTS: Number(process.env.SALTS) || 10,
