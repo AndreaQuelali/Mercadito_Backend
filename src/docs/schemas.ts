@@ -1,0 +1,199 @@
+import * as z from "zod";
+import { Category, OrderStatus, Unit, UserRole } from "@prisma/client";
+
+/**
+ * Response models (components.schemas) and the validators of endpoints that parse their
+ * input by hand instead of with Zod. Request bodies of the rest are taken from the real
+ * validators in each module, so they cannot drift.
+ */
+
+export type JsonSchema = Record<string, unknown>;
+
+const dateTime: JsonSchema = { type: "string", format: "date-time" };
+const nullable = (schema: JsonSchema): JsonSchema => ({ anyOf: [schema, { type: "null" }] });
+/** Prisma Decimal values are serialized as strings by JSON.stringify */
+const decimal: JsonSchema = {
+  type: "string",
+  pattern: "^-?\\d+(\\.\\d+)?$",
+  description: "Decimal serialized as a string",
+  examples: ["12.50"],
+};
+const ref = (name: string): JsonSchema => ({ $ref: `#/components/schemas/${name}` });
+
+export const componentSchemas: Record<string, JsonSchema> = {
+  Error: {
+    type: "object",
+    required: ["ok", "status", "message"],
+    properties: {
+      ok: { type: "boolean", const: false },
+      status: { type: "integer" },
+      message: {
+        description: "Human readable message. Validation details (array) are only sent when NODE_ENV=development",
+        anyOf: [{ type: "string" }, { type: "array", items: { type: "object" } }],
+      },
+    },
+  },
+  AuthSession: {
+    type: "object",
+    required: ["id", "email", "token", "refreshToken"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      email: { type: "string" },
+      token: { type: "string", description: "Access token (JWT, 15 min). Send as `Authorization: Bearer <token>`" },
+      refreshToken: { type: "string", description: "Opaque, rotating, single use. Exchange it at POST /auth/refresh" },
+    },
+  },
+  User: {
+    type: "object",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      firstName: { type: "string" },
+      lastName: { type: "string" },
+      phoneNumber: { type: "string" },
+      phoneCountryCode: { type: "string" },
+      country: { type: "string" },
+      city: { type: "string" },
+      email: { type: "string" },
+      role: { type: "string", enum: Object.values(UserRole) },
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  Seller: {
+    type: "object",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      userId: { type: "string", format: "uuid" },
+      businessName: { type: "string" },
+      description: nullable({ type: "string" }),
+      avatarUrl: nullable({ type: "string" }),
+      location: nullable({ type: "string" }),
+      status: { type: "string", enum: ["active", "suspended"] },
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  Product: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      name: { type: "string" },
+      price: decimal,
+      stock: { type: "integer" },
+      unit: { type: "string", enum: Object.values(Unit) },
+      category: { type: "string", enum: Object.values(Category) },
+      description: { type: "string" },
+      image: { type: "string", format: "uri" },
+      sellerId: { type: "string", format: "uuid" },
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  CartItem: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      cartId: { type: "integer" },
+      productId: { type: "integer" },
+      quantity: { type: "integer" },
+      product: ref("Product"),
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  Cart: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      userId: { type: "string", format: "uuid" },
+      items: { type: "array", items: ref("CartItem") },
+    },
+  },
+  OrderItem: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      orderId: { type: "integer" },
+      productId: { type: "integer" },
+      quantity: { type: "integer" },
+      price: { ...decimal, description: "Unit price at purchase time, as a decimal string" },
+      product: ref("Product"),
+    },
+  },
+  Order: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      userId: { type: "string", format: "uuid" },
+      status: { type: "string", enum: Object.values(OrderStatus) },
+      total: decimal,
+      items: { type: "array", items: ref("OrderItem") },
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  Review: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      userId: { type: "string", format: "uuid" },
+      productId: { type: "integer" },
+      rating: { type: "integer", minimum: 1, maximum: 5 },
+      comment: nullable({ type: "string" }),
+      createdAt: dateTime,
+      updatedAt: dateTime,
+    },
+  },
+  Notification: {
+    type: "object",
+    properties: {
+      id: { type: "integer" },
+      userId: { type: "string", format: "uuid" },
+      type: { type: "string", enum: ["order:status", "order:new", "stock:low", "review:new"] },
+      payload: { type: "object", description: "Same payload that was emitted over Socket.IO" },
+      readAt: nullable(dateTime),
+      createdAt: dateTime,
+    },
+  },
+  NotificationPage: {
+    type: "object",
+    properties: {
+      items: { type: "array", items: ref("Notification") },
+      total: { type: "integer", description: "Matches for the current filter" },
+      unread: { type: "integer", description: "Unread notifications of the user" },
+      page: { type: "integer" },
+      limit: { type: "integer" },
+    },
+  },
+};
+
+// Validators for inputs that the controllers parse by hand (documentation only)
+
+export const ProductQuerySchema = z.object({
+  name: z.string().max(255).optional().describe("Case-insensitive substring of the product name"),
+  category: z.nativeEnum(Category).optional(),
+  minPrice: z.coerce.number().optional(),
+  maxPrice: z.coerce.number().optional(),
+  startAt: z.string().optional().describe("Created at or after (ISO 8601 date)"),
+  endAt: z.string().optional().describe("Created at or before (ISO 8601 date)"),
+});
+
+export const UserQuerySchema = z.object({
+  firstName: z.string().max(50).optional(),
+  lastName: z.string().max(50).optional(),
+  email: z.string().max(100).optional(),
+  role: z.nativeEnum(UserRole).optional(),
+  country: z.string().max(50).optional(),
+  city: z.string().max(50).optional(),
+});
+
+export const UpdateUserBodySchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  phoneCountryCode: z.string().optional(),
+  country: z.string().optional(),
+  city: z.string().optional(),
+  email: z.string().optional(),
+  role: z.nativeEnum(UserRole).optional(),
+});

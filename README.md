@@ -164,6 +164,7 @@ npm run test:coverage
 | `npm test` | Ejecuta todos los tests una vez |
 | `npm run test:watch` | Tests en modo watch |
 | `npm run test:coverage` | Tests + reporte de cobertura |
+| `npm run docs:export` | Regenera `Mercadito.postman_collection.json` desde la spec OpenAPI |
 | `npx prisma migrate dev` | Crea y aplica una nueva migración |
 | `npx prisma studio` | Interfaz visual de la base de datos |
 | `npx prisma generate` | Regenera el cliente de Prisma |
@@ -196,6 +197,7 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 | `SALTS` | No | Rounds de bcrypt (default: `10`, rango válido: 1–31) |
 | `APP_URL` | No | URL base del frontend para links de reset (dev: `http://localhost:4200`) |
 | `CORS_ORIGIN` | No | Origen permitido para CORS. Ej: `http://localhost:4200`. Usar `*` solo en dev. |
+| `ENABLE_DOCS` | No | Sirve Swagger UI en `/docs` y la spec en `/docs.json` (default: `true`, salvo en producción) |
 | `LOW_STOCK_THRESHOLD` | No | Stock a partir del cual una venta dispara `stock:low` al vendedor (default: `5`; entero ≥ 0) |
 
 ### Redis
@@ -233,6 +235,22 @@ Para un proveedor real (staging/producción), configura `SMTP_*` con ese servici
 ---
 
 ## 10. Referencia de la API
+
+### Documentación interactiva (OpenAPI / Swagger)
+
+Con el servidor corriendo:
+
+| URL | Contenido |
+|---|---|
+| `http://localhost:3000/docs` | Swagger UI: prueba los endpoints desde el navegador (botón **Authorize** con tu JWT de acceso) |
+| `http://localhost:3000/docs.json` | Documento OpenAPI 3.1 (impórtalo en Postman, Insomnia o un generador de clientes) |
+
+- Los cuerpos y *query params* de cada endpoint se generan **desde los esquemas Zod reales**, así que no se desactualizan. Las definiciones están en `src/docs/endpoints.ts`.
+- Un test falla si agregas o quitas una ruta sin documentarla, o si `Mercadito.postman_collection.json` no coincide con la spec.
+- Tras cambiar `src/docs/endpoints.ts` o un validador, regenera la colección de Postman con `npm run docs:export`.
+- Por defecto `/docs` está activo, **excepto en producción** (`NODE_ENV=production`). Para forzarlo: `ENABLE_DOCS=true`; para apagarlo: `ENABLE_DOCS=false`.
+
+Las tablas siguientes son un resumen; la referencia completa (esquemas de request y response, códigos de error) está en `/docs`.
 
 ### Health
 
@@ -440,6 +458,12 @@ Mercadito_Backend/
 │   │   ├── prisma.ts                # Cliente Prisma singleton
 │   │   ├── server.routes.ts         # Montaje de rutas
 │   │   └── socket.ts                # Socket.IO con auth JWT
+│   ├── docs/
+│   │   ├── endpoints.ts             # Catálogo de endpoints (fuente de la spec OpenAPI)
+│   │   ├── schemas.ts               # Modelos de respuesta y validadores solo-documentación
+│   │   ├── openapi.ts               # Genera el documento OpenAPI desde Zod
+│   │   ├── postman.ts / export.ts   # Colección de Postman derivada de la spec
+│   │   └── docs.router.ts           # /docs (Swagger UI) y /docs.json
 │   ├── middleware/
 │   │   ├── userSesion.middleware.ts  # Verifica JWT
 │   │   └── userRole.middleware.ts   # Verifica rol y lo adjunta a req.user

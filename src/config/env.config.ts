@@ -17,6 +17,10 @@ export const ENV = {
     NODE_ENV: process.env.NODE_ENV || "development",
     /** IMPORTANT: always set a strong secret in production */
     JWT_SECRET: process.env.JWT_SECRET || "secretKey",
+    /** Serve Swagger UI at /docs and the raw spec at /docs.json. On by default except in production */
+    ENABLE_DOCS: process.env.ENABLE_DOCS
+        ? process.env.ENABLE_DOCS === "true"
+        : process.env.NODE_ENV !== "production",
     /** Access token lifetime (jsonwebtoken format: "15m", "1h"...). Kept short; sessions last via refresh tokens */
     ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || "15m",
     /** Refresh token / session lifetime in seconds (default 7 days) */

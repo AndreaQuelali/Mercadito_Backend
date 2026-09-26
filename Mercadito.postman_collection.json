@@ -1,710 +1,1213 @@
 {
-	"info": {
-		"_postman_id": "a22d6b74-6ca9-4bc2-adb7-66b11ebfa0ca",
-		"name": "Mercadito",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "44924327"
-	},
-	"item": [
-		{
-			"name": "health",
-			"item": [
-				{
-					"name": "health",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/health",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"health"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "products",
-			"item": [
-				{
-					"name": "product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{ \n    \"name\":\"Cebollas\",\n    \"price\":1.5,\"stock\":100,\n    \"unit\":\"kilogramo\",\n    \"category\":\"verduras\",\n    \"description\":\"Cebollas de huerto...\",\n    \"image\":\"https://imageCebolla\" \n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/product",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "products",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/product",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "new product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"price\": 1,\n    \"stock\": 10,\n    \"unit\": \"unidad\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/product/1",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/product/1",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "filter product",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/product/?name=prod&category=fruta&minPrice=10&maxPrice=100&startAt=2025-01-01&endAt=2025-11-11",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product",
-								""
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "prod"
-								},
-								{
-									"key": "category",
-									"value": "fruta"
-								},
-								{
-									"key": "minPrice",
-									"value": "10"
-								},
-								{
-									"key": "maxPrice",
-									"value": "100"
-								},
-								{
-									"key": "startAt",
-									"value": "2025-01-01"
-								},
-								{
-									"key": "endAt",
-									"value": "2025-11-11"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "mine products",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/product/mine",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"product",
-								"mine"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "users",
-			"item": [
-				{
-					"name": "profile",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/user/profile",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"user",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "users",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/user",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"user"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "user for id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"user",
-								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "user id",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Camila Ana\",\n    \"lastName\": \"Almaraz\",\n    \"phoneNumber\": \"60310409\",\n    \"phoneCountryCode\": \"+591\",\n    \"country\": \"Bolivia\",\n    \"city\": \"Cochabamba\",\n    \"email\": \"camila2@demo.com\",\n    \"role\": \"client\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"user",
-								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "user id",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/user/75ddfd5b-29d7-4a98-9d3f-72713ee54f63",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"user",
-								"75ddfd5b-29d7-4a98-9d3f-72713ee54f63"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "auth",
-			"item": [
-				{
-					"name": "register",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Juan\",\n    \"lastName\": \"Almaraz\",\n    \"phoneNumber\": \"60310409\",\n    \"phoneCountryCode\": \"+591\",\n    \"country\": \"Bolivia\",\n    \"city\": \"Cochabamba\",\n    \"email\": \"juanclient@demo.com\",\n    \"password\": \"123456\",\n    \"role\": \"client\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/auth/register",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "login",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"joseseller@demo.com\", \n    \"password\": \"123456\" \n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/auth/login",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "forgot password",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{ \n    \"email\": \"admin@demo.com\" \n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/auth/password/forgot",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"auth",
-								"password",
-								"forgot"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "reset password",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{ \n    \"token\": \"f50f40d9ed5d84b9403d98a18040d\", \n    \"newPassword\": \"nuevaClave123\" \n}\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/auth/password/reset",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"auth",
-								"password",
-								"reset"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "orders",
-			"item": [
-				{
-					"name": "my orders",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIxOTkwLCJleHAiOjE3NjMzMDgzOTB9.1d1qqJu59hvCDCHw__GodUTzIT2DYgGcvp_e1ndp9O8",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/order",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"order"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "order id",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIxOTkwLCJleHAiOjE3NjMzMDgzOTB9.1d1qqJu59hvCDCHw__GodUTzIT2DYgGcvp_e1ndp9O8",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/order/1",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"order",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "status order id",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impvc2VzZWxsZXJAZGVtby5jb20iLCJuYW1lIjoiSm9zZSBNaXJhbmRhIiwic3ViIjoiMDI1N2NkZDctNTE1YS00ODE3LWI1OTAtMjE4Nzk2ZjcxMGYxIiwiaWF0IjoxNzYzMjIwMTcwLCJleHAiOjE3NjMzMDY1NzB9.R-YM4yz297-ZEy2vCN6Un1MV8phYuuPrzEPnbAN7xbM",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{ \n    \"status\": \"shipped\" \n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/order/1/status",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"order",
-								"1",
-								"status"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "reviews",
-			"item": [
-				{
-					"name": "review",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"productId\":5,\n    \"rating\":5,\n    \"comment\":\"Excelente\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/review",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"review"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "review product id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/review/product/1",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"review",
-								"product",
-								"1"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "carts",
-			"item": [
-				{
-					"name": "cart",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/cart",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"cart"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "add product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{ \n    \"productId\": 2, \n    \"quantity\": 2 \n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{API_URL}}/cart/add",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"cart",
-								"add"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "checkout cart",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imx1Y2FzY2xpZW50QGRlbW8uY29tIiwibmFtZSI6Ikx1Y2FzIFF1aXNwZSIsInN1YiI6IjMwMzk0YWIyLWRmMmEtNDllZC05NzkwLWFkZTI3MDg3NzE1OCIsImlhdCI6MTc2MzIyMTQ5MSwiZXhwIjoxNzYzMzA3ODkxfQ.hEvP11stRpNuCAqgRQ_eP43tBB9o3k5fAwZ5H2cVwRY",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{API_URL}}/cart/checkout",
-							"host": [
-								"{{API_URL}}"
-							],
-							"path": [
-								"cart",
-								"checkout"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	]
+  "info": {
+    "name": "Mercadito",
+    "description": "REST API of Mercadito, a marketplace for local products.\n\nAuthenticate with `POST /auth/login`, then send the access token as `Authorization: Bearer <token>`. It lasts 15 minutes; renew it with `POST /auth/refresh`.\n\nReal-time notifications use Socket.IO (see the README); their history is under `/notification`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "API_URL",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "TOKEN",
+      "value": ""
+    },
+    {
+      "key": "REFRESH_TOKEN",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/health",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register a new account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ana\",\n  \"lastName\": \"Quispe\",\n  \"email\": \"ana@example.com\",\n  \"password\": \"Secreto#123\",\n  \"phoneNumber\": \"71234567\",\n  \"phoneCountryCode\": \"+591\",\n  \"country\": \"Bolivia\",\n  \"city\": \"La Paz\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/register",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Log in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@example.com\",\n  \"password\": \"Secreto#123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/login",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Returns a 15 minute access token and a refresh token (7 days, single use).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.token) {",
+                  "  pm.collectionVariables.set(\"TOKEN\", body.data.token);",
+                  "  pm.collectionVariables.set(\"REFRESH_TOKEN\", body.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Renew the session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/refresh",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Consumes the refresh token and returns a new access token plus a new refresh token. Using an already used refresh token revokes the whole session. A 500 means a temporary failure: keep the current session and retry.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.data && body.data.token) {",
+                  "  pm.collectionVariables.set(\"TOKEN\", body.data.token);",
+                  "  pm.collectionVariables.set(\"REFRESH_TOKEN\", body.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log out (revoke the session)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/logout",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Idempotent: it succeeds even if the refresh token was already revoked.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Request a password reset email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/password/forgot",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "password",
+                "forgot"
+              ]
+            },
+            "description": "Always answers 200 so the existence of an email is not disclosed.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Set a new password with a reset token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"3f9a...c2\",\n  \"newPassword\": \"NuevoSecreto#456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/auth/password/reset",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "auth",
+                "password",
+                "reset"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sellers",
+      "item": [
+        {
+          "name": "Create my seller profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Puesto de Ana\",\n  \"description\": \"Verduras frescas\",\n  \"location\": \"Pasillo 3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/seller",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller"
+              ]
+            },
+            "description": "The response includes a new access token that already carries `sellerId`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.token) pm.collectionVariables.set(\"TOKEN\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all sellers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/seller",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get my seller profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/seller/mine",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "mine"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update my seller profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Verduras y frutas frescas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/seller/mine",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "mine"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete my seller profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/seller/mine",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "mine"
+              ]
+            },
+            "description": "Refused with 409 while the seller still has products."
+          }
+        },
+        {
+          "name": "Activate or suspend a seller",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/seller/:id/status",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product?name=&category=&minPrice=&maxPrice=&startAt=&endAt=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Case-insensitive substring of the product name"
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "minPrice",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "startAt",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Created at or after (ISO 8601 date)"
+                },
+                {
+                  "key": "endAt",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Created at or before (ISO 8601 date)"
+                }
+              ]
+            },
+            "description": "Returns an empty array when nothing matches.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Create a product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tomate\",\n  \"price\": 12.5,\n  \"stock\": 40,\n  \"unit\": \"kilogramo\",\n  \"category\": \"verduras\",\n  \"description\": \"Tomate fresco de valle\",\n  \"image\": \"https://example.com/tomate.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/product",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List my products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product/mine",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                "mine"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get a product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Update my product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 11,\n  \"stock\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/product/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "All fields are optional. Only the owner can update it."
+          }
+        },
+        {
+          "name": "Delete my product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get my cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/cart",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart"
+              ]
+            },
+            "description": "An empty cart is returned as `{ items: [] }`, not as an error."
+          }
+        },
+        {
+          "name": "Empty my cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/cart",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a product to the cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/cart/add",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart",
+                "add"
+              ]
+            },
+            "description": "Quantities are summed when the product is already in the cart. Stock is validated."
+          }
+        },
+        {
+          "name": "Create an order from the cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/cart/checkout",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart",
+                "checkout"
+              ]
+            },
+            "description": "Runs in a transaction: validates stock, creates the order, decrements stock and empties the cart. Sellers are notified with `order:new` (and `stock:low`)."
+          }
+        },
+        {
+          "name": "Remove an item from the cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/cart/item/:itemId",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart",
+                "item",
+                ":itemId"
+              ],
+              "variable": [
+                {
+                  "key": "itemId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change the quantity of a cart item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/cart/item/:itemId",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "cart",
+                "item",
+                ":itemId"
+              ],
+              "variable": [
+                {
+                  "key": "itemId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "List my orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/order",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order"
+              ]
+            },
+            "description": "Answers 400 when the user has no orders."
+          }
+        },
+        {
+          "name": "List orders that contain my products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/order/seller/mine",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                "seller",
+                "mine"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get one of my orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/order/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change the status of an order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/status",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "A seller can only update orders that contain their products. Moving to `confirmed` emails the buyer and emits `order:status` to the buyer and to each seller involved."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "List the reviews of a product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/review/product/:productId",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "review",
+                "product",
+                ":productId"
+              ],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Review a product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Excelente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/review",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "review"
+              ]
+            },
+            "description": "Only after an order with that product reached `delivered`. One review per user and product."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get my profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/user/profile",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "user",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/user?firstName=&lastName=&email=&role=&country=&city=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "user"
+              ],
+              "query": [
+                {
+                  "key": "firstName",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "lastName",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "country",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "city",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "At most 100 results. Invalid filter values are ignored."
+          }
+        },
+        {
+          "name": "Get a user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/user/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "user",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update a user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Cochabamba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/user/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "user",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete a user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/user/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "user",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List my notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/notification?page=&limit=&unread=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "notification"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "unread",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark all my notifications as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/notification/read-all",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "notification",
+                "read-all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a notification as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/notification/:id/read",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "notification",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Idempotent. A notification of another user answers 404."
+          }
+        }
+      ]
+    }
+  ]
 }
