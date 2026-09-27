@@ -144,6 +144,37 @@ export const componentSchemas: Record<string, JsonSchema> = {
       updatedAt: dateTime,
     },
   },
+  SalesSummary: {
+    type: "object",
+    properties: {
+      range: {
+        type: "object",
+        properties: { from: nullable({ type: "string", format: "date-time" }), to: nullable({ type: "string", format: "date-time" }) },
+      },
+      total: { ...decimal, description: "Revenue of the counted orders, as a decimal string" },
+      ordersCount: { type: "integer", description: "Distinct orders counted as sales" },
+      unitsSold: { type: "integer" },
+      ordersByStatus: {
+        type: "object",
+        description: "Distinct orders that contain the seller's products, by status (all statuses are present)",
+        properties: Object.fromEntries(Object.values(OrderStatus).map((s) => [s, { type: "integer" }])),
+      },
+      topProducts: {
+        type: "array",
+        maxItems: 5,
+        description: "Best sellers by units, ties broken by revenue",
+        items: {
+          type: "object",
+          properties: {
+            productId: { type: "integer" },
+            name: { type: "string" },
+            units: { type: "integer" },
+            revenue: decimal,
+          },
+        },
+      },
+    },
+  },
   Notification: {
     type: "object",
     properties: {

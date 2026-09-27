@@ -427,6 +427,38 @@
           }
         },
         {
+          "name": "Sales summary of my store",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/seller/sales?from=&to=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Start of the range, inclusive (default: no lower bound)"
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": "End of the range, inclusive. A plain date includes that whole day (default: no upper bound)"
+                }
+              ]
+            },
+            "description": "Revenue and units come from the seller's own items in orders that are `paid`, `confirmed`, `shipped` or `delivered`; `pending` and `cancelled` orders are not sales (they still show in `ordersByStatus`). The range filters by the creation date of the order. Without filters it covers all time."
+          }
+        },
+        {
           "name": "Activate or suspend a seller",
           "request": {
             "method": "PATCH",

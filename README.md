@@ -277,8 +277,11 @@ Las tablas siguientes son un resumen; la referencia completa (esquemas de reques
 | `GET` | `/seller/mine` | Seller activo | Ver mi perfil de vendedor |
 | `PATCH` | `/seller/mine` | Seller activo | Editar mi perfil de vendedor |
 | `DELETE` | `/seller/mine` | Seller activo | Eliminar perfil (falla si hay productos) |
+| `GET` | `/seller/sales` | Seller (activo o suspendido) | Resumen de ventas de mi puesto. Query opcional: `from`, `to` (`YYYY-MM-DD` o ISO 8601; una fecha sola en `to` incluye todo el día) |
 | `GET` | `/seller` | Admin | Listar todos los sellers |
 | `PATCH` | `/seller/:id/status` | Admin | Cambiar status (`active` \| `suspended`) |
+
+> **Qué cuenta como venta:** en `/seller/sales`, los ítems del propio seller en órdenes `paid`, `confirmed`, `shipped` o `delivered`. Las `pending` y `cancelled` no suman ingresos, pero aparecen en `ordersByStatus`. El monto `total` es un string decimal (`"42.00"`), igual que los precios.
 
 ### Productos
 

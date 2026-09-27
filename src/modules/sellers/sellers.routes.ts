@@ -10,6 +10,7 @@ import {
   createSeller,
   deleteMySeller,
   getMySeller,
+  getSellerSales,
   listSellers,
   updateMySeller,
   updateSellerStatus,
@@ -29,6 +30,9 @@ sellerRouter.delete(
   requiresActiveSeller,
   deleteMySeller
 );
+
+// Sales summary of my store (any Seller profile, active or suspended)
+sellerRouter.get("/sales", validateSesionUser, requiresSeller, getSellerSales);
 
 sellerRouter.get(
   "/",

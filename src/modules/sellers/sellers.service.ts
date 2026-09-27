@@ -5,7 +5,7 @@ import {
   IUpdateSellerDto,
   IUpdateSellerStatusDto,
 } from "./dtos/seller.dto";
-import { SellerStatus, UserRole } from "@prisma/client";
+import { OrderStatus, SellerStatus, UserRole } from "@prisma/client";
 
 export const createSellerService = async (
   userId: string,
@@ -146,5 +146,93 @@ export const updateSellerStatusService = async (
       return { ok: false, message: "Seller not found" };
     }
     return { ok: false, message: "Error updating seller status" };
+  }
+};
+
+/** Orders in these statuses count as sales; pending and cancelled orders do not. */
+const SALE_STATUSES: OrderStatus[] = [
+  OrderStatus.paid,
+  OrderStatus.confirmed,
+  OrderStatus.shipped,
+  OrderStatus.delivered,
+];
+const TOP_PRODUCTS_LIMIT = 5;
+
+const toCents = (price: unknown) => Math.round(Number(String(price)) * 100);
+const fromCents = (cents: number) => (cents / 100).toFixed(2);
+
+export const getSellerSalesService = async (
+  sellerId: string,
+  range: { from?: Date; to?: Date }
+): Promise<IServiceResponse<any>> => {
+  try {
+    const createdAt: { gte?: Date; lte?: Date } = {};
+    if (range.from) createdAt.gte = range.from;
+    if (range.to) createdAt.lte = range.to;
+
+    const lines = await prisma.orderItem.findMany({
+      where: {
+        product: { sellerId },
+        ...(range.from || range.to ? { order: { createdAt } } : {}),
+      },
+      select: {
+        productId: true,
+        quantity: true,
+        price: true,
+        product: { select: { name: true } },
+        order: { select: { id: true, status: true } },
+      },
+    });
+
+    const ordersByStatus = Object.fromEntries(
+      Object.values(OrderStatus).map((s) => [s, new Set<number>()])
+    ) as Record<OrderStatus, Set<number>>;
+    const products = new Map<number, { name: string; units: number; cents: number }>();
+    let totalCents = 0;
+    let unitsSold = 0;
+
+    for (const l of lines) {
+      ordersByStatus[l.order.status].add(l.order.id);
+      if (!SALE_STATUSES.includes(l.order.status)) continue;
+
+      const cents = toCents(l.price) * l.quantity;
+      totalCents += cents;
+      unitsSold += l.quantity;
+
+      const p = products.get(l.productId) ?? { name: l.product.name, units: 0, cents: 0 };
+      p.units += l.quantity;
+      p.cents += cents;
+      products.set(l.productId, p);
+    }
+
+    const ordersCount = new Set(
+      SALE_STATUSES.flatMap((s) => [...ordersByStatus[s]])
+    ).size;
+
+    const topProducts = [...products.entries()]
+      .map(([productId, p]) => ({ productId, name: p.name, units: p.units, cents: p.cents }))
+      .sort((a, b) => b.units - a.units || b.cents - a.cents || a.productId - b.productId)
+      .slice(0, TOP_PRODUCTS_LIMIT)
+      .map(({ cents, ...p }) => ({ ...p, revenue: fromCents(cents) }));
+
+    return {
+      ok: true,
+      message: "Sales summary",
+      data: {
+        range: {
+          from: range.from ? range.from.toISOString() : null,
+          to: range.to ? range.to.toISOString() : null,
+        },
+        total: fromCents(totalCents),
+        ordersCount,
+        unitsSold,
+        ordersByStatus: Object.fromEntries(
+          Object.entries(ordersByStatus).map(([s, ids]) => [s, ids.size])
+        ),
+        topProducts,
+      },
+    };
+  } catch (error) {
+    return { ok: false, message: "Error fetching sales" };
   }
 };

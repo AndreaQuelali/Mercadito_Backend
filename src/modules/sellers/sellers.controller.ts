@@ -5,10 +5,12 @@ import {
   UpdateSellerSchema,
   UpdateSellerStatusSchema,
 } from "./schemas/seller.schema";
+import { SalesQuerySchema } from "./schemas/sales.schema";
 import {
   createSellerService,
   deleteMySellerService,
   getMySellerService,
+  getSellerSalesService,
   listSellersService,
   updateMySellerService,
   updateSellerStatusService,
@@ -168,5 +170,44 @@ export const updateSellerStatus = async (req: Request, res: Response) => {
     return res
       .status(500)
       .send({ message: "Error updating seller status", status: 500, ok: false });
+  }
+};
+
+/** A plain end date means "through the end of that day" */
+const toRangeEnd = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T23:59:59.999Z`) : new Date(value);
+
+export const getSellerSales = async (req: Request, res: Response) => {
+  try {
+    const sellerId = req.user?.sellerId as string;
+
+    const { success, data, error } = SalesQuerySchema.safeParse(req.query);
+    if (!success) {
+      return res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+    }
+
+    const from = data.from ? new Date(data.from) : undefined;
+    const to = data.to ? toRangeEnd(data.to) : undefined;
+    if (from && to && from > to) {
+      return res
+        .status(400)
+        .send({ message: "`from` must not be after `to`", status: 400, ok: false });
+    }
+
+    const result = await getSellerSalesService(sellerId, { from, to });
+    if (!result.ok) {
+      return res.status(500).send({ message: result.message, status: 500, ok: false });
+    }
+    return res
+      .status(200)
+      .send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    return res
+      .status(500)
+      .send({ message: "Error fetching sales", status: 500, ok: false });
   }
 };

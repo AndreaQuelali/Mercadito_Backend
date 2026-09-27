@@ -16,6 +16,7 @@ import {
   UpdateSellerSchema,
   UpdateSellerStatusSchema,
 } from "../modules/sellers/schemas/seller.schema";
+import { SalesQuerySchema } from "../modules/sellers/schemas/sales.schema";
 import { JsonSchema, ProductQuerySchema, UpdateUserBodySchema, UserQuerySchema } from "./schemas";
 
 /**
@@ -156,6 +157,15 @@ export const endpoints: Endpoint[] = [
     description: "Refused with 409 while the seller still has products.",
     response: { description: "Seller deleted", data: ref("Seller") },
     errors: [400, 409],
+  },
+  {
+    method: "get", path: "/seller/sales", tag: "Sellers", summary: "Sales summary of my store", access: "seller",
+    description:
+      "Revenue and units come from the seller's own items in orders that are `paid`, `confirmed`, `shipped` or " +
+      "`delivered`; `pending` and `cancelled` orders are not sales (they still show in `ordersByStatus`). " +
+      "The range filters by the creation date of the order. Without filters it covers all time.",
+    query: SalesQuerySchema,
+    response: { description: "Sales summary", data: ref("SalesSummary") },
   },
   {
     method: "get", path: "/seller", tag: "Sellers", summary: "List all sellers", access: "admin",
