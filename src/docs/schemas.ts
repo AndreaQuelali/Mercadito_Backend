@@ -144,6 +144,25 @@ export const componentSchemas: Record<string, JsonSchema> = {
       updatedAt: dateTime,
     },
   },
+  NotificationSettings: {
+    type: "object",
+    required: ["preferences", "lowStockThreshold"],
+    properties: {
+      preferences: {
+        type: "object",
+        required: ["order:new", "stock:low", "review:new"],
+        properties: {
+          "order:new": { type: "boolean" },
+          "stock:low": { type: "boolean" },
+          "review:new": { type: "boolean" },
+        },
+      },
+      lowStockThreshold: {
+        type: "integer",
+        description: "A sale that leaves a product at or below this stock triggers `stock:low`. Read-only",
+      },
+    },
+  },
   SalesSummary: {
     type: "object",
     properties: {

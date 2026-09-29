@@ -427,6 +427,56 @@
           }
         },
         {
+          "name": "Get my notification settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/seller/notification-settings",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "notification-settings"
+              ]
+            },
+            "description": "Which seller events I receive (`order:new`, `stock:low`, `review:new`; all on by default) and the low stock threshold, which the server defines (`LOW_STOCK_THRESHOLD`) and sellers cannot change."
+          }
+        },
+        {
+          "name": "Turn seller notifications on or off",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock:low\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/seller/notification-settings",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "seller",
+                "notification-settings"
+              ]
+            },
+            "description": "Partial update: send only the events to change. A turned-off event is neither emitted over Socket.IO nor stored in the history. `order:status` is part of the order flow and cannot be turned off."
+          }
+        },
+        {
           "name": "Sales summary of my store",
           "request": {
             "method": "GET",

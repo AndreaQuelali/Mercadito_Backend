@@ -17,6 +17,7 @@ import {
   UpdateSellerStatusSchema,
 } from "../modules/sellers/schemas/seller.schema";
 import { SalesQuerySchema } from "../modules/sellers/schemas/sales.schema";
+import { NotificationSettingsSchema } from "../modules/sellers/schemas/notificationSettings.schema";
 import { JsonSchema, ProductQuerySchema, UpdateUserBodySchema, UserQuerySchema } from "./schemas";
 
 /**
@@ -157,6 +158,26 @@ export const endpoints: Endpoint[] = [
     description: "Refused with 409 while the seller still has products.",
     response: { description: "Seller deleted", data: ref("Seller") },
     errors: [400, 409],
+  },
+  {
+    method: "get", path: "/seller/notification-settings", tag: "Sellers",
+    summary: "Get my notification settings", access: "seller",
+    description:
+      "Which seller events I receive (`order:new`, `stock:low`, `review:new`; all on by default) and the " +
+      "low stock threshold, which the server defines (`LOW_STOCK_THRESHOLD`) and sellers cannot change.",
+    response: { description: "My notification settings", data: ref("NotificationSettings") },
+    errors: [404],
+  },
+  {
+    method: "patch", path: "/seller/notification-settings", tag: "Sellers",
+    summary: "Turn seller notifications on or off", access: "seller",
+    description:
+      "Partial update: send only the events to change. A turned-off event is neither emitted over Socket.IO " +
+      "nor stored in the history. `order:status` is part of the order flow and cannot be turned off.",
+    body: NotificationSettingsSchema,
+    bodyExample: { "stock:low": false },
+    response: { description: "Updated settings", data: ref("NotificationSettings") },
+    errors: [404],
   },
   {
     method: "get", path: "/seller/sales", tag: "Sellers", summary: "Sales summary of my store", access: "seller",

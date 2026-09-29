@@ -1,6 +1,7 @@
 import prisma from "../config/prisma";
 import { ENV } from "../config/env.config";
 import { getIO } from "../config/socket";
+import { SELLER_EVENTS, isEventEnabled } from "../modules/sellers/notificationPrefs";
 
 export type NotificationType =
   | "order:status"
@@ -17,16 +18,33 @@ export interface ISaleLine {
   stock: number;
 }
 
+/** True when the user is a seller who turned this event off. Fails open: if unsure, deliver. */
+async function isMutedBySeller(userId: string, type: NotificationType): Promise<boolean> {
+  if (!(SELLER_EVENTS as readonly string[]).includes(type)) return false;
+  try {
+    const seller = await prisma.seller.findUnique({
+      where: { userId },
+      select: { notificationPrefs: true },
+    });
+    return !!seller && !isEventEnabled(seller.notificationPrefs, type);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Persists the notification (history) and pushes it to the user's socket room.
  * Both steps are best-effort and independent: a failure in one never blocks the
  * other nor the business flow that triggered the notification.
+ * Events a seller turned off in their settings are neither stored nor emitted.
  */
 export async function notifyUser(
   userId: string,
   type: NotificationType,
   payload: Record<string, unknown>
 ): Promise<void> {
+  if (await isMutedBySeller(userId, type)) return;
+
   try {
     await prisma.notification.create({
       data: { userId, type, payload: payload as any },

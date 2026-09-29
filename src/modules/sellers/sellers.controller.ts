@@ -6,10 +6,13 @@ import {
   UpdateSellerStatusSchema,
 } from "./schemas/seller.schema";
 import { SalesQuerySchema } from "./schemas/sales.schema";
+import { NotificationSettingsSchema } from "./schemas/notificationSettings.schema";
 import {
   createSellerService,
   deleteMySellerService,
   getMySellerService,
+  getNotificationSettingsService,
+  updateNotificationSettingsService,
   getSellerSalesService,
   listSellersService,
   updateMySellerService,
@@ -209,5 +212,51 @@ export const getSellerSales = async (req: Request, res: Response) => {
     return res
       .status(500)
       .send({ message: "Error fetching sales", status: 500, ok: false });
+  }
+};
+
+export const getNotificationSettings = async (req: Request, res: Response) => {
+  try {
+    const sellerId = req.user?.sellerId as string;
+    const result = await getNotificationSettingsService(sellerId);
+    if (!result.ok) {
+      const status = result.message === "Seller not found" ? 404 : 500;
+      return res.status(status).send({ message: result.message, status, ok: false });
+    }
+    return res
+      .status(200)
+      .send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    return res
+      .status(500)
+      .send({ message: "Error fetching notification settings", status: 500, ok: false });
+  }
+};
+
+export const updateNotificationSettings = async (req: Request, res: Response) => {
+  try {
+    const sellerId = req.user?.sellerId as string;
+
+    const { success, data, error } = NotificationSettingsSchema.safeParse(req.body);
+    if (!success) {
+      return res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+    }
+
+    const result = await updateNotificationSettingsService(sellerId, data);
+    if (!result.ok) {
+      const status = result.message === "Seller not found" ? 404 : 500;
+      return res.status(status).send({ message: result.message, status, ok: false });
+    }
+    return res
+      .status(200)
+      .send({ message: result.message, status: 200, ok: true, data: result.data });
+  } catch (error) {
+    return res
+      .status(500)
+      .send({ message: "Error updating notification settings", status: 500, ok: false });
   }
 };

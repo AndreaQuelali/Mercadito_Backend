@@ -80,6 +80,8 @@ model Seller {
   avatarUrl    String?
   location     String?
   status       SellerStatus @default(active)
+  // Which seller events to receive ("order:new" | "stock:low" | "review:new" -> boolean). null = all on
+  notificationPrefs Json?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

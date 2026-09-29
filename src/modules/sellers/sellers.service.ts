@@ -6,6 +6,9 @@ import {
   IUpdateSellerStatusDto,
 } from "./dtos/seller.dto";
 import { OrderStatus, SellerStatus, UserRole } from "@prisma/client";
+import { ENV } from "../../config/env.config";
+import { normalizePrefs } from "./notificationPrefs";
+import { NotificationSettingsInput } from "./schemas/notificationSettings.schema";
 
 export const createSellerService = async (
   userId: string,
@@ -234,5 +237,59 @@ export const getSellerSalesService = async (
     };
   } catch (error) {
     return { ok: false, message: "Error fetching sales" };
+  }
+};
+
+const notificationSettingsOf = (notificationPrefs: unknown) => ({
+  preferences: normalizePrefs(notificationPrefs),
+  // Set by the server (LOW_STOCK_THRESHOLD); sellers only see it
+  lowStockThreshold: ENV.LOW_STOCK_THRESHOLD,
+});
+
+export const getNotificationSettingsService = async (
+  sellerId: string
+): Promise<IServiceResponse<any>> => {
+  try {
+    const seller = await prisma.seller.findUnique({
+      where: { id: sellerId },
+      select: { id: true, notificationPrefs: true },
+    });
+    if (!seller) return { ok: false, message: "Seller not found" };
+
+    return {
+      ok: true,
+      message: "Notification settings",
+      data: notificationSettingsOf(seller.notificationPrefs),
+    };
+  } catch (error) {
+    return { ok: false, message: "Error fetching notification settings" };
+  }
+};
+
+export const updateNotificationSettingsService = async (
+  sellerId: string,
+  patch: NotificationSettingsInput
+): Promise<IServiceResponse<any>> => {
+  try {
+    const seller = await prisma.seller.findUnique({
+      where: { id: sellerId },
+      select: { id: true, notificationPrefs: true },
+    });
+    if (!seller) return { ok: false, message: "Seller not found" };
+
+    const merged = { ...normalizePrefs(seller.notificationPrefs), ...patch };
+    const updated = await prisma.seller.update({
+      where: { id: sellerId },
+      data: { notificationPrefs: merged },
+      select: { id: true, notificationPrefs: true },
+    });
+
+    return {
+      ok: true,
+      message: "Notification settings updated",
+      data: notificationSettingsOf(updated.notificationPrefs),
+    };
+  } catch (error) {
+    return { ok: false, message: "Error updating notification settings" };
   }
 };

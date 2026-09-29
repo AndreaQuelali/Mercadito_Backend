@@ -278,6 +278,8 @@ Las tablas siguientes son un resumen; la referencia completa (esquemas de reques
 | `PATCH` | `/seller/mine` | Seller activo | Editar mi perfil de vendedor |
 | `DELETE` | `/seller/mine` | Seller activo | Eliminar perfil (falla si hay productos) |
 | `GET` | `/seller/sales` | Seller (activo o suspendido) | Resumen de ventas de mi puesto. Query opcional: `from`, `to` (`YYYY-MM-DD` o ISO 8601; una fecha sola en `to` incluye todo el día) |
+| `GET` | `/seller/notification-settings` | Seller (activo o suspendido) | Qué eventos recibo (`order:new`, `stock:low`, `review:new`) y el umbral de stock bajo (`lowStockThreshold`, solo lectura) |
+| `PATCH` | `/seller/notification-settings` | Seller (activo o suspendido) | Activar/desactivar eventos. Body parcial, p. ej. `{ "stock:low": false }`. Un evento desactivado no se emite ni se guarda en el historial |
 | `GET` | `/seller` | Admin | Listar todos los sellers |
 | `PATCH` | `/seller/:id/status` | Admin | Cambiar status (`active` \| `suspended`) |
 
