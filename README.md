@@ -81,6 +81,10 @@ Para detenerlos y borrar volúmenes (base de datos + caché Redis):
 docker compose down -v
 ```
 
+### Infraestructura para los tests e2e
+
+`docker-compose.e2e.yaml` levanta una base de datos y un Redis **desechables** (contenedores `mercadito-e2e-*`, puertos `5434` y `6380`, sin volúmenes) para los tests Playwright del frontend. Es independiente del `docker-compose.yaml` de desarrollo, así que no toca tus datos ni choca con otros servicios. Normalmente no se usa a mano: lo gestiona `npm run e2e` en `Mercadito_Frontend` (ver su README).
+
 ---
 
 ## 4. Instalar dependencias

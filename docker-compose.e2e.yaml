@@ -1,0 +1,36 @@
+# Disposable infrastructure for the frontend's Playwright e2e tests
+# (see Mercadito_Frontend/e2e). Own ports, own containers and no volumes, so it
+# never touches the development database or Redis, nor anything else on 3000/5432/6379.
+#
+#   docker compose -f docker-compose.e2e.yaml up -d --wait
+#   docker compose -f docker-compose.e2e.yaml down -v
+name: mercadito-e2e
+
+services:
+  database:
+    image: postgres:17.6
+    container_name: mercadito-e2e-postgres
+    environment:
+      POSTGRES_USER: e2e
+      POSTGRES_PASSWORD: e2e
+      POSTGRES_DB: mercadito_e2e
+    ports:
+      - "5434:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e2e -d mercadito_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: mercadito-e2e-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
