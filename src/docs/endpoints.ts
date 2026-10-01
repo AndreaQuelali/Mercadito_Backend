@@ -8,6 +8,7 @@ import { AddToCartSchema } from "../modules/carts/schemas/addToCart.schema";
 import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.schema";
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
 import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
+import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
 import { CreateProductSchema } from "../modules/products/schemas/createProduct.schema";
 import { UpdateProductSchema } from "../modules/products/schemas/updateProduct.schema";
 import { CreateReviewSchema } from "../modules/reviews/schemas/createReview.schema";
@@ -210,6 +211,17 @@ export const endpoints: Endpoint[] = [
     query: ProductQuerySchema,
     response: { description: "Products, newest first", data: list("Product") },
     errors: [400],
+  },
+  {
+    method: "get", path: "/product/search", tag: "Products", summary: "Search products (semantic + text)", access: "user",
+    description:
+      "Hybrid search: a vector ranking (Voyage embeddings in pgvector, only candidates above a minimum similarity) and a " +
+      "Spanish full-text ranking, merged with Reciprocal Rank Fusion. When embeddings are unavailable it answers with " +
+      "text results only and `mode: \"text\"`. Products without stock are excluded unless `includeOutOfStock=true`. " +
+      "Limited per user and minute: the 429 response carries a `Retry-After` header.",
+    query: SearchQuerySchema,
+    response: { description: "Ranked products", data: ref("SearchResults") },
+    errors: [400, 429],
   },
   {
     method: "get", path: "/product/mine", tag: "Products", summary: "List my products", access: "seller",

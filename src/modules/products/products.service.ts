@@ -4,12 +4,16 @@ import { IUpdateProduct } from "./dtos/updateProduct.dto";
 import { IProduct } from "./interfaces/product.interface";
 import prisma from "../../config/prisma";
 import { IProductFilter } from "./dtos/productFilter.dto";
+import { enqueueProductEmbedding } from "../../tools/embeddingQueue.tool";
 
 export const createProductService = async (
   payload: ICreateProduct
 ): Promise<IServiceResponse<IProduct | null>> => {
   try {
     const product = await prisma.product.create({ data: { ...payload } });
+
+    // Index in the background: saving never waits for (or fails because of) the embeddings provider
+    void enqueueProductEmbedding(product.id);
 
     return {
       message: "Product created successfully",
@@ -135,6 +139,8 @@ export const updateProductService = async (
       where: { id: Number(id) },
       data: payload,
     });
+
+    void enqueueProductEmbedding(updated.id);
 
     return {
       message: "Product updated successfully",

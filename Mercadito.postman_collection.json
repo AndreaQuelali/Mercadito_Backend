@@ -637,6 +637,46 @@
           }
         },
         {
+          "name": "Search products (semantic + text)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product/search?q=&limit=&category=&includeOutOfStock=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "includeOutOfStock",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Hybrid search: a vector ranking (Voyage embeddings in pgvector, only candidates above a minimum similarity) and a Spanish full-text ranking, merged with Reciprocal Rank Fusion. When embeddings are unavailable it answers with text results only and `mode: \"text\"`. Products without stock are excluded unless `includeOutOfStock=true`. Limited per user and minute: the 429 response carries a `Retry-After` header."
+          }
+        },
+        {
           "name": "List my products",
           "request": {
             "method": "GET",

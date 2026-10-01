@@ -1,6 +1,6 @@
 services:
   database: 
-    image: postgres:17.6
+    image: pgvector/pgvector:pg17
     container_name: postgres-db-mercadito
     environment: 
       POSTGRES_USER: ${POSTGRES_USER}

@@ -6,6 +6,8 @@
     "start:dev": "nodemon src/main.ts",
     "build": "tsc",
     "docs:export": "ts-node src/docs/export.ts",
+    "embeddings:backfill": "ts-node src/scripts/embeddings-backfill.ts",
+    "eval:search": "ts-node src/scripts/search-eval.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

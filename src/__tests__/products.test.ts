@@ -12,6 +12,8 @@ vi.mock("../config/prisma", () => ({
   },
 }));
 
+vi.mock("../tools/embeddingQueue.tool", () => ({ enqueueProductEmbedding: vi.fn() }));
+
 import {
   createProductService,
   getProductByIdService,
@@ -21,6 +23,7 @@ import {
   deleteProductService,
 } from "../modules/products/products.service";
 import prisma from "../config/prisma";
+import { enqueueProductEmbedding } from "../tools/embeddingQueue.tool";
 
 const db = prisma as any;
 const sellerId = "seller-1";
@@ -222,5 +225,36 @@ describe("deleteProductService", () => {
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/forbidden/i);
     expect(db.product.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe("embedding indexing hook", () => {
+  const queue = vi.mocked(enqueueProductEmbedding);
+
+  it("create enqueues exactly one job for the new product", async () => {
+    db.product.create.mockResolvedValue({ id: 7 });
+    await createProductService({ name: "Pan" } as any);
+    expect(queue).toHaveBeenCalledTimes(1);
+    expect(queue).toHaveBeenCalledWith(7);
+  });
+
+  it("create does not enqueue when saving fails", async () => {
+    db.product.create.mockRejectedValue(new Error("db down"));
+    await createProductService({ name: "Pan" } as any);
+    expect(queue).not.toHaveBeenCalled();
+  });
+
+  it("update enqueues exactly one job", async () => {
+    db.product.findUnique.mockResolvedValue({ id: 7, sellerId });
+    db.product.update.mockResolvedValue({ id: 7 });
+    await updateProductService(7, { name: "Pan" } as any, sellerId);
+    expect(queue).toHaveBeenCalledTimes(1);
+    expect(queue).toHaveBeenCalledWith(7);
+  });
+
+  it("update does not enqueue for a product of another seller", async () => {
+    db.product.findUnique.mockResolvedValue({ id: 7, sellerId: "other" });
+    await updateProductService(7, { name: "Pan" } as any, sellerId);
+    expect(queue).not.toHaveBeenCalled();
   });
 });

@@ -89,6 +89,16 @@ export const componentSchemas: Record<string, JsonSchema> = {
       updatedAt: dateTime,
     },
   },
+  SearchResults: {
+    type: "object",
+    properties: {
+      mode: { type: "string", enum: ["hybrid", "text"], description: "\"text\" means Voyage was unavailable and only text results are returned" },
+      items: {
+        type: "array",
+        items: { allOf: [ref("Product"), { type: "object", properties: { score: { type: "number", description: "Reciprocal Rank Fusion score, higher is better" } } }] },
+      },
+    },
+  },
   CartItem: {
     type: "object",
     properties: {

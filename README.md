@@ -168,6 +168,8 @@ npm run test:coverage
 | `npm test` | Ejecuta todos los tests una vez |
 | `npm run test:watch` | Tests en modo watch |
 | `npm run test:coverage` | Tests + reporte de cobertura |
+| `npm run embeddings:backfill` | Encola el indexado de los productos sin embedding o desactualizados e imprime cuántos |
+| `npm run eval:search` | Evalúa la recuperación con la API real de Voyage (cuesta centavos; requiere `VOYAGE_API_KEY`) |
 | `npm run docs:export` | Regenera `Mercadito.postman_collection.json` desde la spec OpenAPI |
 | `npx prisma migrate dev` | Crea y aplica una nueva migración |
 | `npx prisma studio` | Interfaz visual de la base de datos |
@@ -213,6 +215,21 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 
 > Si el backend corre en tu máquina y Redis en Docker: `REDIS_HOST=localhost`.  
 > Si ambos corren dentro de Docker en la misma red: `REDIS_HOST=redis`.
+
+### Búsqueda semántica (Voyage + pgvector)
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `VOYAGE_API_KEY` | *(vacío)* | Sin key no se indexa (se registra un aviso) y la búsqueda responde en modo `text` |
+| `VOYAGE_MODEL` | `voyage-3.5-lite` | Modelo de embeddings (vectores de 1024 dimensiones) |
+| `EMBEDDINGS_PROVIDER` | `voyage` | `fake` es determinista, solo para tests y el arranque falla si `NODE_ENV` no es `test` |
+| `SEARCH_MIN_SIMILARITY` | `0.35` | Similitud coseno mínima para que un candidato vectorial entre al ranking |
+| `SEARCH_RATE_LIMIT_PER_MIN` | `30` | Búsquedas por usuario y minuto (`429` con `Retry-After` al superarlo) |
+
+- Postgres usa la imagen `pgvector/pgvector:pg17`; la migración `add_product_embeddings` crea la extensión `vector`. Haz un respaldo de `./database` antes del primer arranque con la imagen nueva.
+- Crear o editar un producto encola su indexado en la cola BullMQ `embeddings` (un trabajo por producto, 5 intentos con backoff exponencial); guardar nunca espera a Voyage. Un producto nuevo aparece al instante por texto y por vectores unos segundos después.
+- Para indexar el catálogo existente: `npm run embeddings:backfill` (con el servidor corriendo, para que el worker procese la cola).
+- **Costo:** cada búsqueda con Voyage activo es una llamada de embedding, y el backfill consume tokens por producto. El límite por usuario contiene el abuso, pero no hay un tope global de gasto.
 
 ### Email SMTP (desarrollo con Mailpit)
 
@@ -294,6 +311,7 @@ Las tablas siguientes son un resumen; la referencia completa (esquemas de reques
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
 | `GET` | `/product` | Público | Listar productos (filtros: `name`, `category`, `minPrice`, `maxPrice`, `startAt`, `endAt`) |
+| `GET` | `/product/search` | Usuario | Búsqueda híbrida (vectorial + texto en español): `q` (1-200), `limit` (1-25, default 10), `category`, `includeOutOfStock`. Responde `{ mode: "hybrid" | "text", items }`; `text` significa que Voyage no está disponible |
 | `GET` | `/product/:id` | Público | Obtener un producto por ID |
 | `GET` | `/product/mine` | Seller activo | Listar los productos propios |
 | `POST` | `/product` | Seller activo | Crear producto |

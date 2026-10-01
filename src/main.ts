@@ -7,6 +7,7 @@ import { ENV } from "./config/env.config";
 import http from "http";
 import { initSocket } from "./config/socket";
 import { initMailWorker } from "./tools/mail.tool";
+import { initEmbeddingsWorker } from "./tools/embeddingQueue.tool";
 
 async function init() {
     try {
@@ -32,6 +33,7 @@ async function init() {
         console.log("Socket connection established");
         initMailWorker();
         console.log("Mail worker initialized");
+        initEmbeddingsWorker();
 
         server.listen(PORT, () => {
             console.log(`Server running on port http://localhost:${PORT}`);
