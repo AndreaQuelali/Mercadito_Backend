@@ -223,7 +223,7 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 | `VOYAGE_API_KEY` | *(vacío)* | Sin key no se indexa (se registra un aviso) y la búsqueda responde en modo `text` |
 | `VOYAGE_MODEL` | `voyage-3.5-lite` | Modelo de embeddings (vectores de 1024 dimensiones) |
 | `EMBEDDINGS_PROVIDER` | `voyage` | `fake` es determinista, solo para tests y el arranque falla si `NODE_ENV` no es `test` |
-| `SEARCH_MIN_SIMILARITY` | `0.35` | Similitud coseno mínima para que un candidato vectorial entre al ranking |
+| `SEARCH_MIN_SIMILARITY` | `0.47` | Similitud coseno mínima para que un candidato vectorial entre al ranking |
 | `SEARCH_RATE_LIMIT_PER_MIN` | `30` | Búsquedas por usuario y minuto (`429` con `Retry-After` al superarlo) |
 
 - Postgres usa la imagen `pgvector/pgvector:pg17`; la migración `add_product_embeddings` crea la extensión `vector`. Haz un respaldo de `./database` antes del primer arranque con la imagen nueva.

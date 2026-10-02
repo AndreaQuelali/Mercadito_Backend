@@ -97,6 +97,9 @@ async function embed(texts: string[], inputType: InputType): Promise<number[][]>
 
 export const embedDocuments = (texts: string[]) => embed(texts, "document");
 
+/** Several queries in one request (used by the evaluation script) */
+export const embedQueries = (texts: string[]) => embed(texts, "query");
+
 export async function embedQuery(text: string): Promise<number[]> {
   const [vector] = await embed([text], "query");
   return vector;

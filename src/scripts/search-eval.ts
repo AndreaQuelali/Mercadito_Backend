@@ -6,7 +6,7 @@
  * recall@5 and MRR for the queries that have an answer, plus the best similarity of the queries
  * that have none (e.g. "televisor"), which is what SEARCH_MIN_SIMILARITY has to stay above.
  */
-import { embedDocuments, embedQuery, embeddingModelName, embeddingsAvailable } from "../tools/embeddings.tool";
+import { EmbeddingsError, embedDocuments, embedQueries, embeddingModelName, embeddingsAvailable } from "../tools/embeddings.tool";
 import { buildProductDocument } from "../modules/search/productDocument";
 
 interface CatalogItem {
@@ -95,14 +95,26 @@ const cosine = (a: number[], b: number[]) => {
   return dot / (Math.sqrt(na) * Math.sqrt(nb));
 };
 
+/** Voyage accounts without a payment method allow ~3 requests per minute: wait and retry on 429 */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 5): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!(error instanceof EmbeddingsError) || error.status !== 429 || i >= attempts) throw error;
+      console.warn(`Voyage rate limit (429), retrying in 25s (${i}/${attempts - 1})...`);
+      await new Promise((resolve) => setTimeout(resolve, 25_000));
+    }
+  }
+}
+
 async function main() {
   if (!embeddingsAvailable()) {
     throw new Error("VOYAGE_API_KEY is empty: the evaluation needs the real Voyage API");
   }
   const documents = CATALOG.map(buildProductDocument);
-  const docVectors = await embedDocuments(documents);
-  const queryVectors: number[][] = [];
-  for (const { q } of QUERIES) queryVectors.push(await embedQuery(q)); // one by one: queries are few and cheap
+  const docVectors = await withRetry(() => embedDocuments(documents));
+  const queryVectors = await withRetry(() => embedQueries(QUERIES.map((q) => q.q)));
 
   const rows: Record<string, unknown>[] = [];
   const hitSimilarities: number[] = [];

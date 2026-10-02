@@ -63,10 +63,10 @@ export const ENV = {
     VOYAGE_MODEL: process.env.VOYAGE_MODEL || "voyage-3.5-lite",
     /** "voyage" (default) or "fake" (deterministic, NODE_ENV=test only) */
     EMBEDDINGS_PROVIDER: process.env.EMBEDDINGS_PROVIDER === "fake" ? "fake" : "voyage",
-    /** Minimum cosine similarity for a vector candidate to enter the ranking (assumption until calibrated) */
+    /** Minimum cosine similarity for a vector candidate to enter the ranking (calibrated with npm run eval:search, see SPEC 08) */
     SEARCH_MIN_SIMILARITY: (() => {
         const n = Number(process.env.SEARCH_MIN_SIMILARITY);
-        return process.env.SEARCH_MIN_SIMILARITY && Number.isFinite(n) && n >= -1 && n <= 1 ? n : 0.35;
+        return process.env.SEARCH_MIN_SIMILARITY && Number.isFinite(n) && n >= -1 && n <= 1 ? n : 0.47;
     })(),
     /** Searches allowed per user and minute */
     SEARCH_RATE_LIMIT_PER_MIN: Math.floor(positiveNumber(process.env.SEARCH_RATE_LIMIT_PER_MIN, 30)),
