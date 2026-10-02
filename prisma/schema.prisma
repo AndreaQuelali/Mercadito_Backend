@@ -3,12 +3,14 @@
 // Docs: https://www.prisma.io/docs
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 enum Category {
@@ -106,6 +108,19 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   seller     Seller    @relation(fields: [sellerId], references: [id])
+  embedding  ProductEmbedding?
+}
+
+/// One vector per product. Written and read only with raw SQL (Prisma cannot map `vector`).
+model ProductEmbedding {
+  productId   Int                          @id
+  product     Product                      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  embedding   Unsupported("vector(1024)")
+  /// sha256 of the indexed text; unchanged text is not re-embedded
+  contentHash String
+  /// e.g. "voyage-3.5-lite"; a different model forces a reindex
+  model       String
+  updatedAt   DateTime                     @updatedAt
 }
 
 model Cart {

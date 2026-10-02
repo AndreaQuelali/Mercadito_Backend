@@ -20,7 +20,9 @@ const ERROR_RESPONSES: Record<string, { name: string; description: string }> = {
   "403": { name: "Forbidden", description: "The account is not allowed to do this" },
   "404": { name: "NotFound", description: "The resource does not exist (or is not yours)" },
   "409": { name: "Conflict", description: "The request conflicts with the current state" },
+  "429": { name: "TooManyRequests", description: "Rate limit exceeded; the Retry-After header says how many seconds to wait" },
   "500": { name: "ServerError", description: "Unexpected failure. For POST /auth/refresh keep the session and retry" },
+  "503": { name: "ServiceUnavailable", description: "The feature is disabled or its provider failed; the message can be shown to the user" },
 };
 
 const errorRef = (status: number) => ({ $ref: `#/components/responses/${ERROR_RESPONSES[status].name}` });
@@ -137,6 +139,9 @@ export function buildOpenApiSpec() {
   for (const [status, { name, description }] of Object.entries(ERROR_RESPONSES)) {
     responses[name] = {
       description,
+      ...(status === "429"
+        ? { headers: { "Retry-After": { description: "Seconds until the limit resets", schema: { type: "integer" } } } }
+        : {}),
       content: {
         "application/json": {
           schema: {

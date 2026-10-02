@@ -8,7 +8,7 @@ name: mercadito-e2e
 
 services:
   database:
-    image: postgres:17.6
+    image: pgvector/pgvector:pg17
     container_name: mercadito-e2e-postgres
     environment:
       POSTGRES_USER: e2e

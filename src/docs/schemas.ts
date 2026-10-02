@@ -89,6 +89,74 @@ export const componentSchemas: Record<string, JsonSchema> = {
       updatedAt: dateTime,
     },
   },
+  SearchResults: {
+    type: "object",
+    properties: {
+      mode: { type: "string", enum: ["hybrid", "text"], description: "\"text\" means Voyage was unavailable and only text results are returned" },
+      items: {
+        type: "array",
+        items: { allOf: [ref("Product"), { type: "object", properties: { score: { type: "number", description: "Reciprocal Rank Fusion score, higher is better" } } }] },
+      },
+    },
+  },
+  PendingAction: {
+    type: "object",
+    description: "A change proposed by the assistant that waits for the user's confirmation",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      type: { type: "string", enum: ["add_to_cart", "update_cart_item", "remove_cart_item", "checkout"] },
+      summary: { type: "string", description: "Human text to show next to the confirm / reject buttons", examples: ["Agregar 2 kg de Tomate (Bs 25.00)"] },
+      expiresAt: { ...dateTime, description: "The proposal expires 10 minutes after it was made" },
+    },
+  },
+  AssistantStatus: {
+    type: "object",
+    properties: {
+      enabled: { type: "boolean", description: "false when no OPENAI_API_KEY is configured" },
+      model: nullable({ type: "string" }),
+    },
+  },
+  AssistantReply: {
+    type: "object",
+    properties: {
+      conversationId: { type: "string", format: "uuid", description: "Send it back to continue the conversation" },
+      reply: { type: "string", description: "Assistant text, in Spanish" },
+      products: { type: "array", items: ref("Product"), description: "Products the read tools returned this turn" },
+      pendingActions: { type: "array", items: ref("PendingAction") },
+    },
+  },
+  AssistantConversation: {
+    type: "object",
+    properties: {
+      conversationId: { type: "string", format: "uuid" },
+      messages: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            role: { type: "string", enum: ["user", "assistant", "action_event"] },
+            content: { type: "string" },
+            at: dateTime,
+          },
+        },
+      },
+      pendingActions: { type: "array", items: ref("PendingAction"), description: "Still pending and not expired" },
+    },
+  },
+  AssistantActionResult: {
+    type: "object",
+    properties: {
+      action: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          type: { type: "string", enum: ["add_to_cart", "update_cart_item", "remove_cart_item", "checkout"] },
+          status: { type: "string", enum: ["confirmed", "rejected"] },
+        },
+      },
+      result: { description: "What the action produced: the updated cart or the created order", nullable: true },
+    },
+  },
   CartItem: {
     type: "object",
     properties: {

@@ -637,6 +637,46 @@
           }
         },
         {
+          "name": "Search products (semantic + text)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/product/search?q=&limit=&category=&includeOutOfStock=",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "product",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "includeOutOfStock",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Hybrid search: a vector ranking (Voyage embeddings in pgvector, only candidates above a minimum similarity) and a Spanish full-text ranking, merged with Reciprocal Rank Fusion. When embeddings are unavailable it answers with text results only and `mode: \"text\"`. Products without stock are excluded unless `includeOutOfStock=true`. Limited per user and minute: the 429 response carries a `Retry-After` header."
+          }
+        },
+        {
           "name": "List my products",
           "request": {
             "method": "GET",
@@ -1207,6 +1247,141 @@
                 }
               ]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assistant",
+      "item": [
+        {
+          "name": "Is the shopping assistant enabled?",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/status",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "status"
+              ]
+            },
+            "description": "Public, so the UI can decide whether to show the assistant before login. `enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Resume a conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/conversations/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "conversations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Returns the visible messages (`user`, `assistant`, `action_event`) and the actions still waiting for confirmation, so the chat can be restored after a reload. Internal tool calls and results are never returned. 404: unknown, expired (24 h) or not yours."
+          }
+        },
+        {
+          "name": "Send a message to the shopping assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"agrega 2 kg de tomates\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/assistant/messages",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "messages"
+              ]
+            },
+            "description": "The model can search the catalog and read the user's cart and orders. Anything that changes data (add / change / remove cart items, checkout) only comes back as an entry of `pendingActions`; nothing is executed until the user calls `POST /assistant/actions/{id}/confirm`. Without `conversationId` a new conversation starts. Limited per user and minute (429 with `Retry-After`). 404: the conversation does not exist, expired or is not yours. 503: the assistant is disabled or the model failed."
+          }
+        },
+        {
+          "name": "Confirm an action proposed by the assistant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/actions/:id/confirm",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "actions",
+                ":id",
+                "confirm"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Executes the action exactly once, as the logged-in user. 404: unknown, expired or someone else's. 409: already resolved, or (checkout) the cart changed since the proposal. 400: the action no longer applies (e.g. not enough stock now)."
+          }
+        },
+        {
+          "name": "Reject an action proposed by the assistant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/actions/:id/reject",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "actions",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Discards the proposal without executing anything. The assistant sees the rejection on its next turn."
           }
         }
       ]

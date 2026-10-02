@@ -6,6 +6,21 @@ if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required in production");
 }
 
+// The fake embeddings provider is deterministic and only meant for tests
+if (process.env.EMBEDDINGS_PROVIDER === "fake" && process.env.NODE_ENV !== "test") {
+  throw new Error("EMBEDDINGS_PROVIDER=fake is only allowed when NODE_ENV=test");
+}
+
+// Same for the scripted assistant model used by the API e2e tests
+if (process.env.LLM_PROVIDER === "fake" && process.env.NODE_ENV !== "test") {
+  throw new Error("LLM_PROVIDER=fake is only allowed when NODE_ENV=test");
+}
+
+const positiveNumber =(raw: string | undefined, fallback: number) => {
+    const n = raw === undefined || raw === "" ? NaN : Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+
 export const ENV = {
     PORT: process.env.PORT || 3000,
     POSTGRES_USER: process.env.POSTGRES_USER || "andy",
@@ -48,4 +63,25 @@ export const ENV = {
     SMTP_USER: process.env.SMTP_USER || "",
     SMTP_PASS: process.env.SMTP_PASS || "",
     SMTP_FROM: process.env.SMTP_FROM || "noreply@mercadito.app",
+    // Semantic search. Without a Voyage key nothing is indexed and search runs in text-only mode
+    VOYAGE_API_KEY: process.env.VOYAGE_API_KEY || "",
+    VOYAGE_MODEL: process.env.VOYAGE_MODEL || "voyage-3.5-lite",
+    /** "voyage" (default) or "fake" (deterministic, NODE_ENV=test only) */
+    EMBEDDINGS_PROVIDER: process.env.EMBEDDINGS_PROVIDER === "fake" ? "fake" : "voyage",
+    /** Minimum cosine similarity for a vector candidate to enter the ranking (calibrated with npm run eval:search, see SPEC 08) */
+    SEARCH_MIN_SIMILARITY: (() => {
+        const n = Number(process.env.SEARCH_MIN_SIMILARITY);
+        return process.env.SEARCH_MIN_SIMILARITY && Number.isFinite(n) && n >= -1 && n <= 1 ? n : 0.47;
+    })(),
+    /** Searches allowed per user and minute */
+    SEARCH_RATE_LIMIT_PER_MIN: Math.floor(positiveNumber(process.env.SEARCH_RATE_LIMIT_PER_MIN, 30)),
+    // Shopping assistant (SPEC 09). Without an OpenAI key the assistant is disabled
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
+    OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-6-luna",
+    /** "openai" (default) or "fake" (scripted, NODE_ENV=test only) */
+    LLM_PROVIDER: process.env.LLM_PROVIDER === "fake" ? "fake" : "openai",
+    /** Assistant messages allowed per user and minute */
+    ASSISTANT_RATE_LIMIT_PER_MIN: Math.floor(positiveNumber(process.env.ASSISTANT_RATE_LIMIT_PER_MIN, 10)),
+    /** Max time of one call to the model, in milliseconds */
+    ASSISTANT_TIMEOUT_MS: Math.floor(positiveNumber(process.env.ASSISTANT_TIMEOUT_MS, 30000)),
 }

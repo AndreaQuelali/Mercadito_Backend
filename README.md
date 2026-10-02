@@ -168,6 +168,9 @@ npm run test:coverage
 | `npm test` | Ejecuta todos los tests una vez |
 | `npm run test:watch` | Tests en modo watch |
 | `npm run test:coverage` | Tests + reporte de cobertura |
+| `npm run embeddings:backfill` | Encola el indexado de los productos sin embedding o desactualizados e imprime cuántos |
+| `npm run eval:search` | Evalúa la recuperación con la API real de Voyage (cuesta centavos; requiere `VOYAGE_API_KEY`) |
+| `npm run eval:assistant` | Evalúa el asistente de compras con el modelo real de OpenAI (unos 30 casos, cuesta centavos; requiere `OPENAI_API_KEY`) |
 | `npm run docs:export` | Regenera `Mercadito.postman_collection.json` desde la spec OpenAPI |
 | `npx prisma migrate dev` | Crea y aplica una nueva migración |
 | `npx prisma studio` | Interfaz visual de la base de datos |
@@ -213,6 +216,46 @@ Todas las variables disponibles están en `.env.example`. A continuación se des
 
 > Si el backend corre en tu máquina y Redis en Docker: `REDIS_HOST=localhost`.  
 > Si ambos corren dentro de Docker en la misma red: `REDIS_HOST=redis`.
+
+### Búsqueda semántica (Voyage + pgvector)
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `VOYAGE_API_KEY` | *(vacío)* | Sin key no se indexa (se registra un aviso) y la búsqueda responde en modo `text` |
+| `VOYAGE_MODEL` | `voyage-3.5-lite` | Modelo de embeddings (vectores de 1024 dimensiones) |
+| `EMBEDDINGS_PROVIDER` | `voyage` | `fake` es determinista, solo para tests y el arranque falla si `NODE_ENV` no es `test` |
+| `SEARCH_MIN_SIMILARITY` | `0.47` | Similitud coseno mínima para que un candidato vectorial entre al ranking |
+| `SEARCH_RATE_LIMIT_PER_MIN` | `30` | Búsquedas por usuario y minuto (`429` con `Retry-After` al superarlo) |
+
+- Postgres usa la imagen `pgvector/pgvector:pg17`; la migración `add_product_embeddings` crea la extensión `vector`. Haz un respaldo de `./database` antes del primer arranque con la imagen nueva.
+- Crear o editar un producto encola su indexado en la cola BullMQ `embeddings` (un trabajo por producto, 5 intentos con backoff exponencial); guardar nunca espera a Voyage. Un producto nuevo aparece al instante por texto y por vectores unos segundos después.
+- Para indexar el catálogo existente: `npm run embeddings:backfill` (con el servidor corriendo, para que el worker procese la cola).
+- **Costo:** cada búsqueda con Voyage activo es una llamada de embedding, y el backfill consume tokens por producto. El límite por usuario contiene el abuso, pero no hay un tope global de gasto.
+
+### Asistente de compras (OpenAI)
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `OPENAI_API_KEY` | *(vacío)* | Sin key el asistente queda **desactivado**: `GET /assistant/status` responde `enabled: false` y `POST /assistant/messages` responde `503`. El resto de la app no se ve afectada |
+| `OPENAI_MODEL` | `gpt-6-luna` | Modelo del asistente (Responses API con function calling, `store: false`) |
+| `LLM_PROVIDER` | `openai` | `fake` es un modelo con guion para los e2e; el arranque falla si `NODE_ENV` no es `test` |
+| `ASSISTANT_RATE_LIMIT_PER_MIN` | `10` | Mensajes por usuario y minuto (`429` con `Retry-After` al superarlo) |
+| `ASSISTANT_TIMEOUT_MS` | `30000` | Tiempo máximo de una llamada a OpenAI; al pasarlo la respuesta es `503` |
+
+**Cómo funciona**
+
+- El modelo usa herramientas sobre la API de Mercadito, siempre como el usuario de la sesión. Las de **lectura** se ejecutan al instante: `search_products` (la búsqueda híbrida), `get_product`, `view_cart`, `list_my_orders`, `get_order`.
+- Las que **cambian datos** (`add_to_cart`, `update_cart_item`, `remove_cart_item`, `checkout`) solo **proponen**: se valida el estado actual y la propuesta queda en Redis 10 minutos. El modelo no tiene ninguna herramienta para confirmar.
+- La acción se ejecuta únicamente con `POST /assistant/actions/:id/confirm` (una sola vez; repetirlo da `409`). `POST /assistant/actions/:id/reject` la descarta. Al confirmar se revalida todo: stock, que el ítem siga en el carrito y, en un pedido, que el carrito sea el mismo que vio el usuario (si cambió, `409` y no se crea ningún pedido).
+- La conversación vive en Redis 24 horas (se renueva con cada mensaje); al modelo solo se le envían los últimos 20 mensajes y, en el siguiente turno, el resultado de confirmar o rechazar. Máximo 5 llamadas a herramientas por turno y 1000 caracteres por mensaje.
+- Solo responde sobre compras en Mercadito, en español.
+
+**Costo y privacidad**
+
+- Cada mensaje es al menos una llamada a OpenAI (más una por herramienta usada). `gpt-6-luna` cuesta $0.10 / $0.50 por millón de tokens (entrada / salida). El límite por usuario y por turno contiene el abuso, pero no hay un tope global de gasto.
+- Los mensajes, el carrito y los pedidos del usuario se envían a OpenAI.
+
+**Evaluación:** `npm run eval:assistant` corre los casos de `src/eval/assistant/cases.json` contra el modelo real con un catálogo y un carrito en memoria (no toca la base de datos), imprime una tabla, un resumen en JSON con el costo en tokens y guarda el detalle en `src/eval/assistant/results.json`. Pasa con ≥ 90 % de los casos y el 100 % de los de seguridad.
 
 ### Email SMTP (desarrollo con Mailpit)
 
@@ -294,6 +337,7 @@ Las tablas siguientes son un resumen; la referencia completa (esquemas de reques
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
 | `GET` | `/product` | Público | Listar productos (filtros: `name`, `category`, `minPrice`, `maxPrice`, `startAt`, `endAt`) |
+| `GET` | `/product/search` | Usuario | Búsqueda híbrida (vectorial + texto en español): `q` (1-200), `limit` (1-25, default 10), `category`, `includeOutOfStock`. Responde `{ mode: "hybrid" | "text", items }`; `text` significa que Voyage no está disponible |
 | `GET` | `/product/:id` | Público | Obtener un producto por ID |
 | `GET` | `/product/mine` | Seller activo | Listar los productos propios |
 | `POST` | `/product` | Seller activo | Crear producto |
@@ -302,6 +346,18 @@ Las tablas siguientes son un resumen; la referencia completa (esquemas de reques
 
 Categorías válidas: `verduras`, `frutas`, `panaderia`, `lacteos`, `artesanias`  
 Unidades válidas: `kilogramo`, `unidad`, `frasco`, `litro`
+
+### Asistente de compras
+
+Todos los endpoints requieren sesión activa (JWT). Ver [Asistente de compras (OpenAI)](#asistente-de-compras-openai) para el funcionamiento y las variables.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/assistant/status` | **Público (sin JWT).** `{ enabled, model }`. `enabled: false` si no hay `OPENAI_API_KEY` |
+| `GET` | `/assistant/conversations/:id` | Retoma una conversación: mensajes visibles (`user`, `assistant`, `action_event`) y acciones aún pendientes y no vencidas; nunca `tool_call` ni `tool_result`. `404` inexistente, vencida (24 h) o ajena |
+| `POST` | `/assistant/messages` | Body `{ conversationId?, message (1-1000) }`. Responde `{ conversationId, reply, products, pendingActions }`. `400` body inválido · `404` conversación inexistente o ajena · `429` límite (con `Retry-After`) · `503` asistente desactivado o con fallo |
+| `POST` | `/assistant/actions/:id/confirm` | Ejecuta una acción propuesta, una sola vez. `404` inexistente, vencida o ajena · `409` ya resuelta o carrito cambiado · `400` ya no aplica (p. ej. sin stock) |
+| `POST` | `/assistant/actions/:id/reject` | Descarta la acción sin ejecutar nada. `404` · `409` ya resuelta |
 
 ### Carrito
 
@@ -484,6 +540,8 @@ Mercadito_Backend/
 │   │   ├── orders/                  # Órdenes del buyer y seller
 │   │   ├── reviews/                 # Reseñas post-entrega
 │   │   ├── notifications/           # Historial de notificaciones
+│   │   ├── search/                  # Búsqueda híbrida (pgvector + texto)
+│   │   ├── assistant/               # Asistente de compras: LLM, herramientas, acciones pendientes
 │   │   └── healthCheck/             # GET /health
 │   ├── tools/
 │   │   ├── mailQueue.tool.ts        # BullMQ + nodemailer
