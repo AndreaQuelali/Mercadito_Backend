@@ -125,6 +125,24 @@ export const componentSchemas: Record<string, JsonSchema> = {
       pendingActions: { type: "array", items: ref("PendingAction") },
     },
   },
+  AssistantConversation: {
+    type: "object",
+    properties: {
+      conversationId: { type: "string", format: "uuid" },
+      messages: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            role: { type: "string", enum: ["user", "assistant", "action_event"] },
+            content: { type: "string" },
+            at: dateTime,
+          },
+        },
+      },
+      pendingActions: { type: "array", items: ref("PendingAction"), description: "Still pending and not expired" },
+    },
+  },
   AssistantActionResult: {
     type: "object",
     properties: {

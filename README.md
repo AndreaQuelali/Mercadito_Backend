@@ -353,7 +353,8 @@ Todos los endpoints requieren sesión activa (JWT). Ver [Asistente de compras (O
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/assistant/status` | `{ enabled, model }`. `enabled: false` si no hay `OPENAI_API_KEY` |
+| `GET` | `/assistant/status` | **Público (sin JWT).** `{ enabled, model }`. `enabled: false` si no hay `OPENAI_API_KEY` |
+| `GET` | `/assistant/conversations/:id` | Retoma una conversación: mensajes visibles (`user`, `assistant`, `action_event`) y acciones aún pendientes y no vencidas; nunca `tool_call` ni `tool_result`. `404` inexistente, vencida (24 h) o ajena |
 | `POST` | `/assistant/messages` | Body `{ conversationId?, message (1-1000) }`. Responde `{ conversationId, reply, products, pendingActions }`. `400` body inválido · `404` conversación inexistente o ajena · `429` límite (con `Retry-After`) · `503` asistente desactivado o con fallo |
 | `POST` | `/assistant/actions/:id/confirm` | Ejecuta una acción propuesta, una sola vez. `404` inexistente, vencida o ajena · `409` ya resuelta o carrito cambiado · `400` ya no aplica (p. ej. sin stock) |
 | `POST` | `/assistant/actions/:id/reject` | Descarta la acción sin ejecutar nada. `404` · `409` ya resuelta |

@@ -58,6 +58,19 @@ export interface AssistantReply {
   pendingActions: PendingActionView[];
 }
 
+/** What the browser gets back to resume a conversation: tool_call / tool_result stay internal */
+export interface VisibleMessage {
+  role: "user" | "assistant" | "action_event";
+  content: string;
+  at: string;
+}
+
+export interface ConversationView {
+  conversationId: string;
+  messages: VisibleMessage[];
+  pendingActions: PendingActionView[];
+}
+
 /** An error with the HTTP status the controller must answer with */
 export class AssistantError extends Error {
   constructor(

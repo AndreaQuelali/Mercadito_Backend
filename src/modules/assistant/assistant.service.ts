@@ -4,12 +4,22 @@ import { KvStore } from "./kv";
 import { LlmClient, LlmError, LlmItem } from "./llm";
 import { SYSTEM_PROMPT } from "./prompt";
 import { ToolError, isToolName, isWriteTool, llmToolDefs, proposeWriteTool, runReadTool } from "./tools";
-import { CONVERSATION_TTL_SECONDS, ActionsDeps, conversationKey, createPendingAction } from "./actions.service";
+import {
+  CONVERSATION_TTL_SECONDS,
+  ActionsDeps,
+  actionKey,
+  conversationKey,
+  createPendingAction,
+  resolvedKey,
+} from "./actions.service";
 import {
   AssistantError,
   AssistantReply,
   Conversation,
   ConversationMessage,
+  ConversationView,
+  PendingAction,
+  VisibleMessage,
   PendingActionView,
   ReadTool,
   WriteTool,
@@ -166,5 +176,36 @@ export function createAssistantService(deps: AssistantDeps) {
     return { conversationId: conversation.id, reply, products: [...products.values()], pendingActions };
   }
 
-  return { sendMessage };
+  /** Lets the browser resume a conversation after a reload. Internal tool messages are never exposed. */
+  async function getConversation(userId: string, conversationId: string): Promise<ConversationView> {
+    const conversation = await loadConversation(userId, conversationId);
+
+    const messages: VisibleMessage[] = [];
+    const actionIds: string[] = [];
+    for (const m of conversation.messages) {
+      if (m.role === "user" || m.role === "assistant") messages.push({ role: m.role, content: m.content, at: m.at });
+      else if (m.role === "action_event") messages.push({ role: "action_event", content: m.detail, at: m.at });
+      else if (m.role === "tool_result") {
+        const out = m.output as { status?: string; actionId?: string } | null;
+        if (out?.status === "pending_confirmation" && out.actionId) actionIds.push(out.actionId);
+      }
+    }
+
+    // Only actions still waiting: not expired, not resolved, not confirmed or rejected
+    const pendingActions: PendingActionView[] = [];
+    const nowMs = (deps.now ?? (() => new Date()))().getTime();
+    for (const id of actionIds) {
+      const raw = await deps.kv.get(actionKey(id));
+      if (!raw) continue;
+      const action = JSON.parse(raw) as PendingAction;
+      if (action.userId !== userId || action.status !== "pending") continue;
+      if (new Date(action.expiresAt).getTime() <= nowMs) continue;
+      if (await deps.kv.get(resolvedKey(id))) continue;
+      pendingActions.push({ id: action.id, type: action.type, summary: action.summary, expiresAt: action.expiresAt });
+    }
+
+    return { conversationId: conversation.id, messages, pendingActions };
+  }
+
+  return { sendMessage, getConversation };
 }

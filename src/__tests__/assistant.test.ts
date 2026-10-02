@@ -446,21 +446,23 @@ describe("HTTP endpoints", () => {
     (ENV as any).ASSISTANT_RATE_LIMIT_PER_MIN = original.rate;
   });
 
-  it("answers 401 without a session on every endpoint", async () => {
-    await request(app).get("/assistant/status").expect(401);
+  it("answers 401 without a session on every endpoint except the public status", async () => {
+    await request(app).get("/assistant/conversations/00000000-0000-4000-8000-000000000000").expect(401);
     await request(app).post("/assistant/messages").send({ message: "hola" }).expect(401);
     await request(app).post("/assistant/actions/00000000-0000-4000-8000-000000000000/confirm").expect(401);
     await request(app).post("/assistant/actions/00000000-0000-4000-8000-000000000000/reject").expect(401);
   });
 
-  it("GET /status reports enabled and the model", async () => {
+  it("GET /status is public and reports enabled and the model", async () => {
+    const anon = await request(app).get("/assistant/status").expect(200);
+    expect(anon.body.data).toEqual({ enabled: true, model: ENV.OPENAI_MODEL });
     const res = await request(app).get("/assistant/status").set("Authorization", `Bearer ${token("u1")}`).expect(200);
     expect(res.body.data).toEqual({ enabled: true, model: ENV.OPENAI_MODEL });
   });
 
   it("without OPENAI_API_KEY the assistant is disabled and messages answer 503", async () => {
     (ENV as any).OPENAI_API_KEY = "";
-    const status = await request(app).get("/assistant/status").set("Authorization", `Bearer ${token("u1")}`).expect(200);
+    const status = await request(app).get("/assistant/status").expect(200);
     expect(status.body.data).toEqual({ enabled: false, model: null });
     await request(app).post("/assistant/messages").set("Authorization", `Bearer ${token("u1")}`).send({ message: "hola" }).expect(503);
   });
@@ -517,6 +519,39 @@ describe("HTTP endpoints", () => {
     await request(app).post(`/assistant/actions/${action.id}/confirm`).set(auth).expect(409);
     await request(app).post(`/assistant/actions/${action.id}/reject`).set(auth).expect(409);
     await request(app).post("/assistant/actions/not-a-uuid/confirm").set(auth).expect(404);
+  });
+
+  it("GET /conversations/:id resumes: visible messages only, pending actions that still wait, 404 for others", async () => {
+    const llm = scripted([call("add_to_cart", { productId: 1, quantity: 2 }), text("Pendiente"), call("add_to_cart", { productId: 2, quantity: 1 }), text("Otra")]);
+    runtime.assistant = createAssistantService({ kv: s.kv, backend: s.backend, llm: () => llm.client });
+    const auth = { Authorization: `Bearer ${token("u1")}` };
+
+    const first = await request(app).post("/assistant/messages").set(auth).send({ message: "agrega 2 tomates" }).expect(200);
+    const { conversationId } = first.body.data;
+    const second = await request(app).post("/assistant/messages").set(auth).send({ conversationId, message: "y un pan" }).expect(200);
+    const [a1] = first.body.data.pendingActions;
+    const [a2] = second.body.data.pendingActions;
+    await request(app).post(`/assistant/actions/${a1.id}/reject`).set(auth).expect(200);
+
+    const res = await request(app).get(`/assistant/conversations/${conversationId}`).set(auth).expect(200);
+    const roles = res.body.data.messages.map((m: any) => m.role);
+    expect(roles).toEqual(["user", "assistant", "user", "assistant", "action_event"]);
+    expect(JSON.stringify(res.body)).not.toMatch(/tool_call|tool_result/);
+    expect(res.body.data.pendingActions.map((a: any) => a.id)).toEqual([a2.id]);
+
+    await request(app).get(`/assistant/conversations/${conversationId}`).set({ Authorization: `Bearer ${token("u2")}` }).expect(404);
+    await request(app).get("/assistant/conversations/00000000-0000-4000-8000-000000000000").set(auth).expect(404);
+    await request(app).get("/assistant/conversations/not-a-uuid").set(auth).expect(404);
+  });
+
+  it("GET /conversations/:id drops expired pending actions", async () => {
+    const llm = scripted([call("add_to_cart", { productId: 1, quantity: 2 }), text("Pendiente")]);
+    runtime.assistant = createAssistantService({ kv: s.kv, backend: s.backend, llm: () => llm.client });
+    const auth = { Authorization: `Bearer ${token("u1")}` };
+    const msg = await request(app).post("/assistant/messages").set(auth).send({ message: "agrega 2 tomates" }).expect(200);
+    s.kv.data.delete(actionKey(msg.body.data.pendingActions[0].id)); // Redis TTL expiry
+    const res = await request(app).get(`/assistant/conversations/${msg.body.data.conversationId}`).set(auth).expect(200);
+    expect(res.body.data.pendingActions).toEqual([]);
   });
 
   it("reject answers 200 and executes nothing", async () => {

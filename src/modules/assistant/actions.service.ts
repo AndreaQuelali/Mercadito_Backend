@@ -8,7 +8,7 @@ export const ACTION_TTL_SECONDS = 10 * 60;
 export const CONVERSATION_TTL_SECONDS = 24 * 60 * 60;
 
 export const actionKey = (id: string) => `assistant:action:${id}`;
-const resolvedKey = (id: string) => `assistant:action-resolved:${id}`;
+export const resolvedKey = (id: string) => `assistant:action-resolved:${id}`;
 export const conversationKey = (id: string) => `assistant:conv:${id}`;
 
 export interface ActionsDeps {

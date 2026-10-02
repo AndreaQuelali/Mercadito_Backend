@@ -375,9 +375,18 @@ export const endpoints: Endpoint[] = [
 
   // Assistant
   {
-    method: "get", path: "/assistant/status", tag: "Assistant", summary: "Is the shopping assistant enabled?", access: "user",
-    description: "`enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503.",
+    method: "get", path: "/assistant/status", tag: "Assistant", summary: "Is the shopping assistant enabled?", access: "public",
+    description: "Public, so the UI can decide whether to show the assistant before login. `enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503.",
     response: { description: "Assistant status", data: ref("AssistantStatus") },
+  },
+  {
+    method: "get", path: "/assistant/conversations/:id", tag: "Assistant", summary: "Resume a conversation", access: "user",
+    description:
+      "Returns the visible messages (`user`, `assistant`, `action_event`) and the actions still waiting for confirmation, so the " +
+      "chat can be restored after a reload. Internal tool calls and results are never returned. 404: unknown, expired (24 h) or not yours.",
+    params: { id: "uuid" },
+    response: { description: "The conversation", data: ref("AssistantConversation") },
+    errors: [404],
   },
   {
     method: "post", path: "/assistant/messages", tag: "Assistant", summary: "Send a message to the shopping assistant", access: "user",

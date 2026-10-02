@@ -121,6 +121,7 @@ describe("OpenAPI document", () => {
   it("marks protected operations with bearer auth and a 401, and public ones without", () => {
     const publicOps = [
       "GET /health",
+      "GET /assistant/status",
       "GET /product",
       "GET /product/{id}",
       "GET /review/product/{productId}",

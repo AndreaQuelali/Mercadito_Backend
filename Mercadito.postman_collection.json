@@ -1269,7 +1269,35 @@
                 "status"
               ]
             },
-            "description": "`enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503."
+            "description": "Public, so the UI can decide whether to show the assistant before login. `enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Resume a conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/conversations/:id",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "conversations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Returns the visible messages (`user`, `assistant`, `action_event`) and the actions still waiting for confirmation, so the chat can be restored after a reload. Internal tool calls and results are never returned. 404: unknown, expired (24 h) or not yours."
           }
         },
         {

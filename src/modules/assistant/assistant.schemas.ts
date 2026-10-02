@@ -7,4 +7,6 @@ export const SendMessageSchema = z.object({
 
 export const ActionIdParamsSchema = z.object({ id: z.uuid() });
 
+export const ConversationIdParamsSchema = z.object({ id: z.uuid() });
+
 export type SendMessageInput = z.infer<typeof SendMessageSchema>;

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ENV } from "../../config/env.config";
 import { AssistantError } from "./assistant.types";
-import { ActionIdParamsSchema, SendMessageSchema } from "./assistant.schemas";
+import { ActionIdParamsSchema, ConversationIdParamsSchema, SendMessageSchema } from "./assistant.schemas";
 import { checkAssistantRateLimit } from "./assistantRateLimit";
 import { confirmAction, rejectAction } from "./actions.service";
 import { llmEnabled, llmModelName } from "./llm";
@@ -77,5 +77,19 @@ export const reject = async (req: Request, res: Response) => {
     return res.status(200).send({ message: "Action rejected", status: 200, ok: true, data });
   } catch (error) {
     return handleError(res, error, "rejecting the action");
+  }
+};
+
+export const getConversation = async (req: Request, res: Response) => {
+  try {
+    const params = ConversationIdParamsSchema.safeParse(req.params);
+    if (!params.success) return fail(res, 404, "Conversación no encontrada");
+    const userId = req.user?.sub as string | undefined;
+    if (!userId) return fail(res, 401, "Unauthorized");
+
+    const data = await assistant.getConversation(userId, params.data.id);
+    return res.status(200).send({ message: "Conversation", status: 200, ok: true, data });
+  } catch (error) {
+    return handleError(res, error, "reading the conversation");
   }
 };
