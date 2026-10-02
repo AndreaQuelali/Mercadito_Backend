@@ -11,7 +11,12 @@ if (process.env.EMBEDDINGS_PROVIDER === "fake" && process.env.NODE_ENV !== "test
   throw new Error("EMBEDDINGS_PROVIDER=fake is only allowed when NODE_ENV=test");
 }
 
-const positiveNumber = (raw: string | undefined, fallback: number) => {
+// Same for the scripted assistant model used by the API e2e tests
+if (process.env.LLM_PROVIDER === "fake" && process.env.NODE_ENV !== "test") {
+  throw new Error("LLM_PROVIDER=fake is only allowed when NODE_ENV=test");
+}
+
+const positiveNumber =(raw: string | undefined, fallback: number) => {
     const n = raw === undefined || raw === "" ? NaN : Number(raw);
     return Number.isFinite(n) && n > 0 ? n : fallback;
 };
@@ -70,4 +75,13 @@ export const ENV = {
     })(),
     /** Searches allowed per user and minute */
     SEARCH_RATE_LIMIT_PER_MIN: Math.floor(positiveNumber(process.env.SEARCH_RATE_LIMIT_PER_MIN, 30)),
+    // Shopping assistant (SPEC 09). Without an OpenAI key the assistant is disabled
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
+    OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-6-luna",
+    /** "openai" (default) or "fake" (scripted, NODE_ENV=test only) */
+    LLM_PROVIDER: process.env.LLM_PROVIDER === "fake" ? "fake" : "openai",
+    /** Assistant messages allowed per user and minute */
+    ASSISTANT_RATE_LIMIT_PER_MIN: Math.floor(positiveNumber(process.env.ASSISTANT_RATE_LIMIT_PER_MIN, 10)),
+    /** Max time of one call to the model, in milliseconds */
+    ASSISTANT_TIMEOUT_MS: Math.floor(positiveNumber(process.env.ASSISTANT_TIMEOUT_MS, 30000)),
 }

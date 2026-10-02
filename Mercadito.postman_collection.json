@@ -1252,6 +1252,113 @@
       ]
     },
     {
+      "name": "Assistant",
+      "item": [
+        {
+          "name": "Is the shopping assistant enabled?",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/status",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "status"
+              ]
+            },
+            "description": "`enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503."
+          }
+        },
+        {
+          "name": "Send a message to the shopping assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"agrega 2 kg de tomates\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/assistant/messages",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "messages"
+              ]
+            },
+            "description": "The model can search the catalog and read the user's cart and orders. Anything that changes data (add / change / remove cart items, checkout) only comes back as an entry of `pendingActions`; nothing is executed until the user calls `POST /assistant/actions/{id}/confirm`. Without `conversationId` a new conversation starts. Limited per user and minute (429 with `Retry-After`). 404: the conversation does not exist, expired or is not yours. 503: the assistant is disabled or the model failed."
+          }
+        },
+        {
+          "name": "Confirm an action proposed by the assistant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/actions/:id/confirm",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "actions",
+                ":id",
+                "confirm"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Executes the action exactly once, as the logged-in user. 404: unknown, expired or someone else's. 409: already resolved, or (checkout) the cart changed since the proposal. 400: the action no longer applies (e.g. not enough stock now)."
+          }
+        },
+        {
+          "name": "Reject an action proposed by the assistant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/assistant/actions/:id/reject",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "assistant",
+                "actions",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Discards the proposal without executing anything. The assistant sees the rejection on its next turn."
+          }
+        }
+      ]
+    },
+    {
       "name": "Notifications",
       "item": [
         {

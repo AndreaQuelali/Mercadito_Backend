@@ -8,6 +8,7 @@ import orderRouter from "../modules/orders/orders.routes";
 import reviewRouter from "../modules/reviews/reviews.routes";
 import sellerRouter from "../modules/sellers/sellers.routes";
 import notificationRouter from "../modules/notifications/notifications.routes";
+import assistantRouter from "../modules/assistant/assistant.routes";
 import { createDocsRouter } from "../docs/docs.router";
 import { ENV } from "./env.config";
 
@@ -22,6 +23,7 @@ export const routeMounts: [string, Router][] = [
   ["/review", reviewRouter],
   ["/seller", sellerRouter],
   ["/notification", notificationRouter],
+  ["/assistant", assistantRouter],
 ];
 
 const router = Router();

@@ -8,6 +8,7 @@ import { AddToCartSchema } from "../modules/carts/schemas/addToCart.schema";
 import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.schema";
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
 import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
+import { SendMessageSchema } from "../modules/assistant/assistant.schemas";
 import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
 import { CreateProductSchema } from "../modules/products/schemas/createProduct.schema";
 import { UpdateProductSchema } from "../modules/products/schemas/updateProduct.schema";
@@ -370,6 +371,41 @@ export const endpoints: Endpoint[] = [
     params: { id: "uuid" },
     response: { description: "User deleted", data: ref("User") },
     errors: [404],
+  },
+
+  // Assistant
+  {
+    method: "get", path: "/assistant/status", tag: "Assistant", summary: "Is the shopping assistant enabled?", access: "user",
+    description: "`enabled` is false when no `OPENAI_API_KEY` is configured; in that case `POST /assistant/messages` answers 503.",
+    response: { description: "Assistant status", data: ref("AssistantStatus") },
+  },
+  {
+    method: "post", path: "/assistant/messages", tag: "Assistant", summary: "Send a message to the shopping assistant", access: "user",
+    description:
+      "The model can search the catalog and read the user's cart and orders. Anything that changes data (add / change / remove " +
+      "cart items, checkout) only comes back as an entry of `pendingActions`; nothing is executed until the user calls " +
+      "`POST /assistant/actions/{id}/confirm`. Without `conversationId` a new conversation starts. Limited per user and minute " +
+      "(429 with `Retry-After`). 404: the conversation does not exist, expired or is not yours. 503: the assistant is disabled or the model failed.",
+    body: SendMessageSchema,
+    bodyExample: { message: "agrega 2 kg de tomates" },
+    response: { description: "The assistant's reply", data: ref("AssistantReply") },
+    errors: [404, 429, 503],
+  },
+  {
+    method: "post", path: "/assistant/actions/:id/confirm", tag: "Assistant", summary: "Confirm an action proposed by the assistant", access: "user",
+    description:
+      "Executes the action exactly once, as the logged-in user. 404: unknown, expired or someone else's. 409: already resolved, " +
+      "or (checkout) the cart changed since the proposal. 400: the action no longer applies (e.g. not enough stock now).",
+    params: { id: "uuid" },
+    response: { description: "The action and what it produced", data: ref("AssistantActionResult") },
+    errors: [400, 404, 409],
+  },
+  {
+    method: "post", path: "/assistant/actions/:id/reject", tag: "Assistant", summary: "Reject an action proposed by the assistant", access: "user",
+    description: "Discards the proposal without executing anything. The assistant sees the rejection on its next turn.",
+    params: { id: "uuid" },
+    response: { description: "The rejected action", data: ref("AssistantActionResult") },
+    errors: [404, 409],
   },
 
   // Notifications

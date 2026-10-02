@@ -8,6 +8,7 @@
     "docs:export": "ts-node src/docs/export.ts",
     "embeddings:backfill": "ts-node src/scripts/embeddings-backfill.ts",
     "eval:search": "ts-node src/scripts/search-eval.ts",
+    "eval:assistant": "ts-node src/scripts/assistant-eval.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -51,6 +52,7 @@
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^10.0.0",
+    "openai": "^7.61.0",
     "socket.io": "^4.7.5",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.1.12"
