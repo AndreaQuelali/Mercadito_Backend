@@ -197,6 +197,19 @@ describe("getSellerSalesService", () => {
     ]);
   });
 
+  it("sends the product photo with each top product", async () => {
+    db.orderItem.findMany.mockResolvedValue([
+      line({ productId: 1, quantity: 2, price: "1.00", product: { name: "Papa", image: "https://example.com/papa.jpg" }, order: { id: 1, status: "delivered" } }),
+    ]);
+
+    const result = await getSellerSalesService("s", {});
+
+    expect(result.data.topProducts).toEqual([
+      { productId: 1, name: "Papa", image: "https://example.com/papa.jpg", units: 2, revenue: "2.00" },
+    ]);
+    expect(db.orderItem.findMany.mock.calls[0][0].select.product).toEqual({ select: { name: true, image: true } });
+  });
+
   it("leaves non-revenue orders out of the top products", async () => {
     db.orderItem.findMany.mockResolvedValue([
       line({ productId: 1, order: { id: 1, status: "cancelled" } }),

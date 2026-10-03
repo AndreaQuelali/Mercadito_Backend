@@ -182,7 +182,7 @@ export const getSellerSalesService = async (
         productId: true,
         quantity: true,
         price: true,
-        product: { select: { name: true } },
+        product: { select: { name: true, image: true } },
         order: { select: { id: true, status: true } },
       },
     });
@@ -190,7 +190,7 @@ export const getSellerSalesService = async (
     const ordersByStatus = Object.fromEntries(
       Object.values(OrderStatus).map((s) => [s, new Set<number>()])
     ) as Record<OrderStatus, Set<number>>;
-    const products = new Map<number, { name: string; units: number; cents: number }>();
+    const products = new Map<number, { name: string; image: string; units: number; cents: number }>();
     let totalCents = 0;
     let unitsSold = 0;
 
@@ -202,7 +202,7 @@ export const getSellerSalesService = async (
       totalCents += cents;
       unitsSold += l.quantity;
 
-      const p = products.get(l.productId) ?? { name: l.product.name, units: 0, cents: 0 };
+      const p = products.get(l.productId) ?? { name: l.product.name, image: l.product.image, units: 0, cents: 0 };
       p.units += l.quantity;
       p.cents += cents;
       products.set(l.productId, p);
@@ -213,7 +213,7 @@ export const getSellerSalesService = async (
     ).size;
 
     const topProducts = [...products.entries()]
-      .map(([productId, p]) => ({ productId, name: p.name, units: p.units, cents: p.cents }))
+      .map(([productId, p]) => ({ productId, name: p.name, image: p.image, units: p.units, cents: p.cents }))
       .sort((a, b) => b.units - a.units || b.cents - a.cents || a.productId - b.productId)
       .slice(0, TOP_PRODUCTS_LIMIT)
       .map(({ cents, ...p }) => ({ ...p, revenue: fromCents(cents) }));

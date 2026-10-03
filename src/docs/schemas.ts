@@ -255,6 +255,7 @@ export const componentSchemas: Record<string, JsonSchema> = {
           properties: {
             productId: { type: "integer" },
             name: { type: "string" },
+            image: { type: "string", description: "Product photo URL, for the thumbnail" },
             units: { type: "integer" },
             revenue: decimal,
           },
