@@ -14,10 +14,24 @@ export async function listMyOrdersService(
       orderBy: { createdAt: "desc" },
       include: {
         items: { include: { product: true } },
+        seller: { select: { id: true, businessName: true, location: true } },
       },
     });
     if (orders.length === 0) return { ok: false, message: "Orders not found" };
-    return { ok: true, message: "Orders fetched", data: orders };
+
+    // One entry per purchase, newest first (orders are already sorted)
+    const byCheckout = new Map<string, any[]>();
+    for (const o of orders) {
+      byCheckout.set(o.checkoutId, [...(byCheckout.get(o.checkoutId) ?? []), o]);
+    }
+    const groups = [...byCheckout].map(([checkoutId, group]) => ({
+      checkoutId,
+      createdAt: group[0].createdAt,
+      fulfillment: group[0].fulfillment,
+      total: group.reduce((sum, o) => sum + Number(o.total), 0),
+      orders: group,
+    }));
+    return { ok: true, message: "Orders fetched", data: groups };
   } catch (error) {
     return { ok: false, message: "Error fetching orders" };
   }
@@ -30,7 +44,10 @@ export async function getOrderByIdService(
   try {
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId },
-      include: { items: { include: { product: true } } },
+      include: {
+        items: { include: { product: true } },
+        seller: { select: { id: true, businessName: true, location: true } },
+      },
     });
     if (!order) return { ok: false, message: "Order not found" };
     return { ok: true, message: "Order fetched", data: order };
@@ -47,24 +64,18 @@ export async function updateOrderStatusService(
   sellerId?: string | null
 ): Promise<IServiceResponse<any>> {
   try {
-    // Non-admin sellers may only update orders that contain their products
+    // Non-admin sellers may only update the orders of their own stand
     if (requesterRole !== UserRole.admin) {
       const orderBelongsToSeller = await prisma.order.findFirst({
         where: {
           id: orderId,
-          items: {
-            some: {
-              product: sellerId
-                ? { sellerId }
-                : { seller: { userId: requesterId } },
-            },
-          },
+          ...(sellerId ? { sellerId } : { seller: { userId: requesterId } }),
         },
       });
       if (!orderBelongsToSeller) {
         return {
           ok: false,
-          message: "Forbidden: this order does not contain your products",
+          message: "Forbidden: this order does not belong to your stand",
         };
       }
     }
@@ -73,21 +84,15 @@ export async function updateOrderStatusService(
       where: { id: orderId },
       data: { status: payload.status },
       include: {
-        items: { include: { product: { include: { seller: true } } } },
-        user: true,
+        items: { include: { product: true } },
+        seller: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     });
     if (payload.status === "confirmed") {
-      await sendOrderConfirmedEmail(updated.user.email, updated.id);
+      await sendOrderConfirmedEmail(updated.user.email, updated.id, updated.fulfillment);
       await notifyOrderStatus(updated.userId, updated.id, payload.status);
-      const sellerUserIds = Array.from(
-        new Set(updated.items.map((i: any) => i.product.seller.userId))
-      );
-      await Promise.all(
-        sellerUserIds.map((uid) =>
-          notifyOrderStatus(uid, updated.id, payload.status)
-        )
-      );
+      await notifyOrderStatus(updated.seller.userId, updated.id, payload.status);
     }
     return { ok: true, message: "Order status updated", data: updated };
   } catch (error: any) {
@@ -102,11 +107,9 @@ export async function listSellerOrdersService(
 ): Promise<IServiceResponse<any[]>> {
   try {
     const orders = await prisma.order.findMany({
-      where: {
-        items: { some: { product: { seller: { userId } } } },
-      },
+      where: { seller: { userId } },
       orderBy: { createdAt: "desc" },
-      include: { items: { include: { product: true } }, user: true },
+      include: { items: { include: { product: true } }, user: { select: { id: true, firstName: true, lastName: true, phoneNumber: true, phoneCountryCode: true } } },
     });
     if (orders.length === 0) return { ok: false, message: "Orders not found" };
     return { ok: true, message: "Seller orders fetched", data: orders };

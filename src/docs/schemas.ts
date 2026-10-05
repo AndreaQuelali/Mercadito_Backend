@@ -193,11 +193,37 @@ export const componentSchemas: Record<string, JsonSchema> = {
     properties: {
       id: { type: "integer" },
       userId: { type: "string", format: "uuid" },
+      sellerId: { type: "string", format: "uuid", description: "The stand that owns this order" },
+      checkoutId: { type: "string", format: "uuid", description: "Shared by the orders of one purchase" },
       status: { type: "string", enum: Object.values(OrderStatus) },
       total: decimal,
+      fulfillment: { type: "string", enum: ["pickup", "delivery"] },
+      address: { ...nullable({ type: "string" }), description: "Only for delivery" },
+      addressRef: nullable({ type: "string" }),
+      contactPhone: { type: "string" },
+      note: nullable({ type: "string", maxLength: 300 }),
+      seller: { type: "object", description: "Stand data (businessName, location)" },
       items: { type: "array", items: ref("OrderItem") },
       createdAt: dateTime,
       updatedAt: dateTime,
+    },
+  },
+  Checkout: {
+    type: "object",
+    properties: {
+      checkoutId: { type: "string", format: "uuid" },
+      orders: { type: "array", items: ref("Order") },
+    },
+  },
+  Purchase: {
+    type: "object",
+    description: "The orders of one checkout, grouped",
+    properties: {
+      checkoutId: { type: "string", format: "uuid" },
+      createdAt: dateTime,
+      fulfillment: { type: "string", enum: ["pickup", "delivery"] },
+      total: { type: "number", description: "Sum of the orders" },
+      orders: { type: "array", items: ref("Order") },
     },
   },
   Review: {

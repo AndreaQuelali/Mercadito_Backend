@@ -65,7 +65,11 @@ export async function notifyOrderStatus(userId: string, orderId: number, status:
 }
 
 /** Tells each seller about the new order (their items only) and about low stock. */
-export async function notifyOrderCreated(orderId: number, sales: ISaleLine[]): Promise<void> {
+export async function notifyOrderCreated(
+  orderId: number,
+  sales: ISaleLine[],
+  fulfillment?: "pickup" | "delivery"
+): Promise<void> {
   const bySeller = new Map<string, ISaleLine[]>();
   for (const line of sales) {
     if (!line.sellerUserId) continue;
@@ -76,6 +80,7 @@ export async function notifyOrderCreated(orderId: number, sales: ISaleLine[]): P
   for (const [sellerUserId, lines] of bySeller) {
     await notifyUser(sellerUserId, "order:new", {
       orderId,
+      ...(fulfillment ? { fulfillment } : {}),
       items: lines.map((l) => ({ productId: l.productId, name: l.name, quantity: l.quantity })),
     });
 

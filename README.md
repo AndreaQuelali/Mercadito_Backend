@@ -370,7 +370,7 @@ Todos los endpoints requieren sesión activa (JWT).
 | `PATCH` | `/cart/item/:itemId` | Actualizar cantidad de un ítem — Body: `{ "quantity": 3 }` |
 | `DELETE` | `/cart/item/:itemId` | Eliminar un ítem del carrito |
 | `DELETE` | `/cart` | Vaciar el carrito completo |
-| `POST` | `/cart/checkout` | Crear orden desde el carrito (descuenta stock, vacía carrito) |
+| `POST` | `/cart/checkout` | Crear los pedidos del carrito, **uno por puesto**, con el mismo `checkoutId` (descuenta stock, vacía carrito). Body: `{ "fulfillment": "pickup" | "delivery", "address"?, "addressRef"?, "contactPhone"?, "note"? }`; `delivery` exige `address` y `addressRef`. Responde `201 { checkoutId, orders }` |
 
 ### Órdenes
 
@@ -378,10 +378,10 @@ Todos los endpoints requieren sesión activa (JWT).
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `GET` | `/order` | Cualquiera | Mis órdenes |
+| `GET` | `/order` | Cualquiera | Mis compras, agrupadas por `checkoutId` (un pedido por puesto) |
 | `GET` | `/order/:id` | Cualquiera | Detalle de una orden propia |
-| `GET` | `/order/seller/mine` | Seller activo | Órdenes que contienen productos del seller |
-| `PATCH` | `/order/:id/status` | Seller activo / Admin | Actualizar status de una orden |
+| `GET` | `/order/seller/mine` | Seller activo | Pedidos de su puesto, con los datos de entrega |
+| `PATCH` | `/order/:id/status` | Seller activo / Admin | Actualizar status de un pedido (solo del propio puesto; `403` si es de otro) |
 
 Estados válidos: `pending` → `paid` → `confirmed` → `shipped` → `delivered` → `cancelled`
 

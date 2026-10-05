@@ -7,6 +7,7 @@ import { ResetPasswordSchema } from "../modules/auth/schemas/resetPassword.schem
 import { AddToCartSchema } from "../modules/carts/schemas/addToCart.schema";
 import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.schema";
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
+import { CheckoutSchema } from "../modules/carts/schemas/checkout.schema";
 import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
 import { SendMessageSchema } from "../modules/assistant/assistant.schemas";
 import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
@@ -271,11 +272,15 @@ export const endpoints: Endpoint[] = [
     response: { description: "Updated cart", data: ref("Cart") },
   },
   {
-    method: "post", path: "/cart/checkout", tag: "Cart", summary: "Create an order from the cart", access: "user",
+    method: "post", path: "/cart/checkout", tag: "Cart", summary: "Create the orders of the cart (one per stand)", access: "user",
     description:
-      "Runs in a transaction: validates stock, creates the order, decrements stock and empties the cart. " +
-      "Sellers are notified with `order:new` (and `stock:low`).",
-    response: { status: 201, description: "Order created", data: ref("Order") },
+      "Runs in a transaction: validates stock, creates **one order per stand** with products in the cart (all sharing " +
+      "a `checkoutId`), decrements stock and empties the cart. If any product lacks stock nothing is created. " +
+      "`delivery` requires `address` and `addressRef`; `pickup` ignores them. `contactPhone` defaults to the profile phone. " +
+      "Each seller is notified with `order:new` (and `stock:low`). 400: invalid delivery data, empty cart or no stock.",
+    body: CheckoutSchema,
+    bodyExample: { fulfillment: "delivery", address: "Av. Siempre Viva 123", addressRef: "Portón verde, frente a la panadería", note: "Tocar el timbre" },
+    response: { status: 201, description: "Orders created", data: ref("Checkout") },
     errors: [400],
   },
   {
@@ -300,13 +305,13 @@ export const endpoints: Endpoint[] = [
 
   // Orders
   {
-    method: "get", path: "/order", tag: "Orders", summary: "List my orders", access: "user",
-    description: "Answers 400 when the user has no orders.",
-    response: { description: "My orders", data: list("Order") },
+    method: "get", path: "/order", tag: "Orders", summary: "List my purchases", access: "user",
+    description: "Orders grouped by purchase (`checkoutId`), newest first, one order per stand. Answers 400 when the user has no orders.",
+    response: { description: "My purchases", data: list("Purchase") },
     errors: [400],
   },
   {
-    method: "get", path: "/order/seller/mine", tag: "Orders", summary: "List orders that contain my products", access: "seller",
+    method: "get", path: "/order/seller/mine", tag: "Orders", summary: "List the orders of my stand", access: "seller",
     response: { description: "Orders of my store", data: list("Order") },
     errors: [400],
   },
@@ -318,8 +323,8 @@ export const endpoints: Endpoint[] = [
   {
     method: "patch", path: "/order/:id/status", tag: "Orders", summary: "Change the status of an order", access: "adminOrActiveSeller",
     description:
-      "A seller can only update orders that contain their products. Moving to `confirmed` emails the buyer " +
-      "and emits `order:status` to the buyer and to each seller involved.",
+      "A seller can only update the orders of their own stand (403 otherwise). Moving to `confirmed` emails the buyer " +
+      "(mentioning pickup or delivery) and emits `order:status` to the buyer and to the seller.",
     body: UpdateOrderStatusSchema,
     bodyExample: { status: "confirmed" },
     response: { description: "Order updated", data: ref("Order") },

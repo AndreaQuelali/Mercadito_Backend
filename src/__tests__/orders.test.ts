@@ -46,6 +46,24 @@ describe("listMyOrdersService", () => {
   });
 });
 
+describe("listMyOrdersService — grouping", () => {
+  it("groups the orders of one purchase by checkoutId, with their total", async () => {
+    db.order.findMany.mockResolvedValue([
+      { id: 3, checkoutId: "c2", total: "30.00", fulfillment: "pickup", createdAt: "d2" },
+      { id: 2, checkoutId: "c1", total: "10.50", fulfillment: "delivery", createdAt: "d1" },
+      { id: 1, checkoutId: "c1", total: "4.50", fulfillment: "delivery", createdAt: "d1" },
+    ]);
+
+    const result = await listMyOrdersService("u1");
+
+    expect(result.data!.map((g: any) => g.checkoutId)).toEqual(["c2", "c1"]);
+    const c1 = result.data!.find((g: any) => g.checkoutId === "c1");
+    expect(c1.orders.map((o: any) => o.id)).toEqual([2, 1]);
+    expect(c1.total).toBe(15);
+    expect(c1.fulfillment).toBe("delivery");
+  });
+});
+
 describe("getOrderByIdService", () => {
   it("scopes the lookup to the requester", async () => {
     db.order.findFirst.mockResolvedValue({ id: 5 });
@@ -71,15 +89,13 @@ describe("updateOrderStatusService", () => {
     id: 7,
     userId: "buyer-1",
     status,
+    fulfillment: "delivery",
     user: { email: "buyer@test.com" },
-    items: [
-      { product: { seller: { userId: "seller-user-1" } } },
-      { product: { seller: { userId: "seller-user-1" } } },
-      { product: { seller: { userId: "seller-user-2" } } },
-    ],
+    seller: { userId: "seller-user-1" },
+    items: [],
   });
 
-  it("forbids a seller from updating an order without their products", async () => {
+  it("forbids a seller from updating an order of another stand", async () => {
     db.order.findFirst.mockResolvedValue(null);
 
     const result = await updateOrderStatusService(
@@ -101,9 +117,7 @@ describe("updateOrderStatusService", () => {
 
     await updateOrderStatusService(7, { status: "shipped" } as any, "u", "user" as any, "seller-1");
 
-    expect(db.order.findFirst.mock.calls[0][0].where.items.some.product).toEqual({
-      sellerId: "seller-1",
-    });
+    expect(db.order.findFirst.mock.calls[0][0].where).toEqual({ id: 7, sellerId: "seller-1" });
   });
 
   it("falls back to the seller's userId when sellerId is missing", async () => {
@@ -112,9 +126,7 @@ describe("updateOrderStatusService", () => {
 
     await updateOrderStatusService(7, { status: "shipped" } as any, "u1", "user" as any, null);
 
-    expect(db.order.findFirst.mock.calls[0][0].where.items.some.product).toEqual({
-      seller: { userId: "u1" },
-    });
+    expect(db.order.findFirst.mock.calls[0][0].where).toEqual({ id: 7, seller: { userId: "u1" } });
   });
 
   it("lets an admin skip the ownership check", async () => {
@@ -141,7 +153,7 @@ describe("updateOrderStatusService", () => {
     expect(notifyOrderStatus).not.toHaveBeenCalled();
   });
 
-  it("emails the buyer and notifies buyer and each distinct seller on confirmed", async () => {
+  it("emails the buyer (with the delivery method) and notifies buyer and the order's seller on confirmed", async () => {
     db.order.findFirst.mockResolvedValue({ id: 7 });
     db.order.update.mockResolvedValue(updatedOrder("confirmed"));
 
@@ -154,9 +166,9 @@ describe("updateOrderStatusService", () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(sendOrderConfirmedEmail).toHaveBeenCalledWith("buyer@test.com", 7);
+    expect(sendOrderConfirmedEmail).toHaveBeenCalledWith("buyer@test.com", 7, "delivery");
     const notified = (notifyOrderStatus as any).mock.calls.map((c: any[]) => c[0]);
-    expect(notified.sort()).toEqual(["buyer-1", "seller-user-1", "seller-user-2"]);
+    expect(notified.sort()).toEqual(["buyer-1", "seller-user-1"]);
   });
 
   it("maps Prisma P2025 to 'Order not found'", async () => {
@@ -175,14 +187,14 @@ describe("updateOrderStatusService", () => {
 });
 
 describe("listSellerOrdersService", () => {
-  it("queries orders that contain the seller's products", async () => {
+  it("queries the orders of the seller's own stand", async () => {
     db.order.findMany.mockResolvedValue([{ id: 1 }]);
 
     const result = await listSellerOrdersService("seller-user-1");
 
     expect(result.ok).toBe(true);
     expect(db.order.findMany.mock.calls[0][0].where).toEqual({
-      items: { some: { product: { seller: { userId: "seller-user-1" } } } },
+      seller: { userId: "seller-user-1" },
     });
   });
 

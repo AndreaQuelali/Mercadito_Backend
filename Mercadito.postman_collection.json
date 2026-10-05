@@ -851,10 +851,24 @@
           }
         },
         {
-          "name": "Create an order from the cart",
+          "name": "Create the orders of the cart (one per stand)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fulfillment\": \"delivery\",\n  \"address\": \"Av. Siempre Viva 123\",\n  \"addressRef\": \"Portón verde, frente a la panadería\",\n  \"note\": \"Tocar el timbre\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{API_URL}}/cart/checkout",
               "host": [
@@ -865,7 +879,7 @@
                 "checkout"
               ]
             },
-            "description": "Runs in a transaction: validates stock, creates the order, decrements stock and empties the cart. Sellers are notified with `order:new` (and `stock:low`)."
+            "description": "Runs in a transaction: validates stock, creates **one order per stand** with products in the cart (all sharing a `checkoutId`), decrements stock and empties the cart. If any product lacks stock nothing is created. `delivery` requires `address` and `addressRef`; `pickup` ignores them. `contactPhone` defaults to the profile phone. Each seller is notified with `order:new` (and `stock:low`). 400: invalid delivery data, empty cart or no stock."
           }
         },
         {
@@ -936,7 +950,7 @@
       "name": "Orders",
       "item": [
         {
-          "name": "List my orders",
+          "name": "List my purchases",
           "request": {
             "method": "GET",
             "header": [],
@@ -949,11 +963,11 @@
                 "order"
               ]
             },
-            "description": "Answers 400 when the user has no orders."
+            "description": "Orders grouped by purchase (`checkoutId`), newest first, one order per stand. Answers 400 when the user has no orders."
           }
         },
         {
-          "name": "List orders that contain my products",
+          "name": "List the orders of my stand",
           "request": {
             "method": "GET",
             "header": [],
@@ -1029,7 +1043,7 @@
                 }
               ]
             },
-            "description": "A seller can only update orders that contain their products. Moving to `confirmed` emails the buyer and emits `order:status` to the buyer and to each seller involved."
+            "description": "A seller can only update the orders of their own stand (403 otherwise). Moving to `confirmed` emails the buyer (mentioning pickup or delivery) and emits `order:status` to the buyer and to the seller."
           }
         }
       ]
