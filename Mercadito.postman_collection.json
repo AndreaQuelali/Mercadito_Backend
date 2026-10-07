@@ -1045,6 +1045,84 @@
             },
             "description": "A seller can only update the orders of their own stand (403 otherwise). Moving to `confirmed` emails the buyer (mentioning pickup or delivery) and emits `order:status` to the buyer and to the seller."
           }
+        },
+        {
+          "name": "Attach the payment proof of my order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/comprobante.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/payment-proof",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "payment-proof"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Only for `qr_transfer` orders of the buyer. Allowed when the payment is `unpaid` or `rejected`; the order then becomes `proof_uploaded` and the seller gets `payment:proof`. 404: not my order. 409: wrong method, already paid, proof already waiting or order cancelled."
+          }
+        },
+        {
+          "name": "Confirm or reject the payment of an order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\",\n  \"reason\": \"El monto no coincide\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/payment",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "payment"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "`confirm` marks the payment `paid` (a `pending` order becomes `paid`): for QR it needs a proof, for cash it is the collection on delivery. `reject` needs a `reason` and only applies to a proof waiting for review. The buyer gets `payment:confirmed` or `payment:rejected`. 403: the order belongs to another stand. 409: invalid transition."
+          }
         }
       ]
     },

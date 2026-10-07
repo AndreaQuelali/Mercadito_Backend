@@ -8,6 +8,7 @@ import { AddToCartSchema } from "../modules/carts/schemas/addToCart.schema";
 import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.schema";
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
 import { CheckoutSchema } from "../modules/carts/schemas/checkout.schema";
+import { PaymentProofSchema, UpdatePaymentSchema } from "../modules/orders/schemas/payment.schema";
 import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
 import { SendMessageSchema } from "../modules/assistant/assistant.schemas";
 import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
@@ -329,6 +330,28 @@ export const endpoints: Endpoint[] = [
     bodyExample: { status: "confirmed" },
     response: { description: "Order updated", data: ref("Order") },
     errors: [404],
+  },
+  {
+    method: "post", path: "/order/:id/payment-proof", tag: "Orders", summary: "Attach the payment proof of my order", access: "user",
+    description:
+      "Only for `qr_transfer` orders of the buyer. Allowed when the payment is `unpaid` or `rejected`; the order then " +
+      "becomes `proof_uploaded` and the seller gets `payment:proof`. 404: not my order. 409: wrong method, already paid, " +
+      "proof already waiting or order cancelled.",
+    body: PaymentProofSchema,
+    bodyExample: { url: "https://example.com/comprobante.jpg" },
+    response: { description: "Order with the proof", data: ref("Order") },
+    errors: [404, 409],
+  },
+  {
+    method: "patch", path: "/order/:id/payment", tag: "Orders", summary: "Confirm or reject the payment of an order", access: "adminOrActiveSeller",
+    description:
+      "`confirm` marks the payment `paid` (a `pending` order becomes `paid`): for QR it needs a proof, for cash it is the " +
+      "collection on delivery. `reject` needs a `reason` and only applies to a proof waiting for review. The buyer gets " +
+      "`payment:confirmed` or `payment:rejected`. 403: the order belongs to another stand. 409: invalid transition.",
+    body: UpdatePaymentSchema,
+    bodyExample: { action: "reject", reason: "El monto no coincide" },
+    response: { description: "Order updated", data: ref("Order") },
+    errors: [403, 404, 409],
   },
 
   // Reviews

@@ -38,7 +38,7 @@ function mockTx(product: any, cartItems: any[]) {
 describe("checkoutService → notifications", () => {
   it("notifies sellers with the stock left after the sale", async () => {
     mockTx(
-      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "seller-u1" } },
+      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "seller-u1", acceptsCash: true } },
       [{ id: 100, productId: 1, quantity: 2 }]
     );
 
@@ -63,7 +63,7 @@ describe("checkoutService → notifications", () => {
 
   it("does not fail the checkout when notifying throws", async () => {
     mockTx(
-      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "s" } },
+      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "s", acceptsCash: true } },
       [{ id: 100, productId: 1, quantity: 1 }]
     );
     (notifyOrderCreated as any).mockRejectedValue(new Error("socket down"));

@@ -8,7 +8,13 @@ import { CheckoutInput } from "./schemas/checkout.schema";
 
 /** Cart lines carry their product and the stand it belongs to (checkout groups by stand). */
 const CART_ITEM_INCLUDE = {
-  product: { include: { seller: { select: { id: true, businessName: true, location: true } } } },
+  product: {
+    include: {
+      seller: {
+        select: { id: true, businessName: true, location: true, acceptsCash: true, acceptsQr: true },
+      },
+    },
+  },
 } as const;
 
 export async function getOrCreateCart(userId: string) {
@@ -203,13 +209,28 @@ export async function checkoutService(
       for (const item of cart.items) {
         const product = await tx.product.findUnique({
           where: { id: item.productId },
-          include: { seller: { select: { userId: true } } },
+          include: {
+            seller: { select: { userId: true, businessName: true, acceptsCash: true, acceptsQr: true } },
+          },
         });
         if (!product)
           return { ok: false, message: `Product ${item.productId} not found` } as IServiceResponse<any>;
         if (product.stock < item.quantity)
           return { ok: false, message: `Insufficient stock for product ${product.id}` } as IServiceResponse<any>;
         lines.push({ productId: item.productId, quantity: item.quantity, product });
+      }
+
+      // Every stand of the purchase must accept the chosen payment method
+      const paymentMethod = delivery.paymentMethod ?? "cash_on_delivery";
+      for (const line of lines) {
+        const seller = line.product.seller;
+        const accepted = paymentMethod === "qr_transfer" ? seller?.acceptsQr : seller?.acceptsCash;
+        if (!accepted) {
+          return {
+            ok: false,
+            message: `${seller?.businessName ?? "A stand"} does not accept the payment method ${paymentMethod}`,
+          } as IServiceResponse<any>;
+        }
       }
 
       let contactPhone = delivery.contactPhone;
@@ -240,6 +261,7 @@ export async function checkoutService(
             total,
             status: "pending",
             fulfillment: delivery.fulfillment,
+            paymentMethod,
             address: delivery.address ?? null,
             addressRef: delivery.addressRef ?? null,
             contactPhone,

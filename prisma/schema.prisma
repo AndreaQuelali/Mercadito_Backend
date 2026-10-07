@@ -84,6 +84,11 @@ model Seller {
   status       SellerStatus @default(active)
   // Which seller events to receive ("order:new" | "stock:low" | "review:new" -> boolean). null = all on
   notificationPrefs Json?
+  // Payment data the buyers see (SPEC 12)
+  acceptsCash         Boolean @default(true)
+  acceptsQr           Boolean @default(false)
+  paymentQrUrl        String?
+  paymentInstructions String? // up to 500 characters
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -157,6 +162,18 @@ enum OrderStatus {
   cancelled
 }
 
+enum PaymentMethod {
+  cash_on_delivery
+  qr_transfer
+}
+
+enum PaymentStatus {
+  unpaid
+  proof_uploaded
+  paid
+  rejected
+}
+
 enum Fulfillment {
   pickup
   delivery
@@ -175,6 +192,13 @@ model Order {
   addressRef   String?
   contactPhone String
   note         String? // up to 300 characters
+
+  paymentMethod       PaymentMethod
+  paymentStatus       PaymentStatus @default(unpaid)
+  paymentProofUrl     String?
+  paymentRejectReason String?
+  paidAt              DateTime?
+
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 

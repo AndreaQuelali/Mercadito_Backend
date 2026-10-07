@@ -111,7 +111,7 @@ const product = (id: number, sellerId: string, stock = 10, price = 50) => ({
   price,
   stock,
   sellerId,
-  seller: { userId: `user-of-${sellerId}` },
+  seller: { userId: `user-of-${sellerId}`, businessName: `Stand ${sellerId}`, acceptsCash: true, acceptsQr: false },
 });
 
 describe("checkoutService", () => {
@@ -260,5 +260,58 @@ describe("CheckoutSchema", () => {
   it("rejects a note over 300 characters", () => {
     expect(parse({ fulfillment: "pickup", note: "x".repeat(301) }).success).toBe(false);
     expect(parse({ fulfillment: "pickup", note: "x".repeat(300) }).success).toBe(true);
+  });
+});
+
+describe("checkoutService — payment method", () => {
+  const stand = (id: string, acceptsCash: boolean, acceptsQr: boolean) => ({
+    ...product(1, id),
+    seller: { userId: `user-of-${id}`, businessName: `Stand ${id}`, acceptsCash, acceptsQr },
+  });
+
+  it("defaults to cash on delivery", async () => {
+    const created = mockCheckoutTx({ items: [{ productId: 1, quantity: 1 }], products: { 1: stand("s1", true, false) } });
+
+    await checkoutService(userId, { fulfillment: "pickup" });
+
+    expect(created.orders[0].paymentMethod).toBe("cash_on_delivery");
+  });
+
+  it("stores the chosen QR method when every stand accepts it", async () => {
+    const created = mockCheckoutTx({
+      items: [{ productId: 1, quantity: 1 }, { productId: 2, quantity: 1 }],
+      products: { 1: stand("s1", true, true), 2: { ...stand("s2", false, true), id: 2 } },
+    });
+
+    const result = await checkoutService(userId, { fulfillment: "pickup", paymentMethod: "qr_transfer" });
+
+    expect(result.ok).toBe(true);
+    expect(created.orders.map((o) => o.paymentMethod)).toEqual(["qr_transfer", "qr_transfer"]);
+  });
+
+  it("creates nothing when one stand does not accept the method", async () => {
+    const created = mockCheckoutTx({
+      items: [{ productId: 1, quantity: 1 }, { productId: 2, quantity: 1 }],
+      products: { 1: stand("s1", true, true), 2: { ...stand("s2", true, false), id: 2 } },
+    });
+
+    const result = await checkoutService(userId, { fulfillment: "pickup", paymentMethod: "qr_transfer" });
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/Stand s2 does not accept/);
+    expect(created.orders).toHaveLength(0);
+    expect(created.stockUpdates).toHaveLength(0);
+  });
+
+  it("rejects cash for a QR-only stand", async () => {
+    mockCheckoutTx({ items: [{ productId: 1, quantity: 1 }], products: { 1: stand("s1", false, true) } });
+
+    const result = await checkoutService(userId, { fulfillment: "pickup" });
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("the schema rejects an unknown payment method", () => {
+    expect(CheckoutSchema.safeParse({ fulfillment: "pickup", paymentMethod: "bitcoin" }).success).toBe(false);
   });
 });

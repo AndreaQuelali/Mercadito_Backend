@@ -370,7 +370,7 @@ Todos los endpoints requieren sesión activa (JWT).
 | `PATCH` | `/cart/item/:itemId` | Actualizar cantidad de un ítem — Body: `{ "quantity": 3 }` |
 | `DELETE` | `/cart/item/:itemId` | Eliminar un ítem del carrito |
 | `DELETE` | `/cart` | Vaciar el carrito completo |
-| `POST` | `/cart/checkout` | Crear los pedidos del carrito, **uno por puesto**, con el mismo `checkoutId` (descuenta stock, vacía carrito). Body: `{ "fulfillment": "pickup" | "delivery", "address"?, "addressRef"?, "contactPhone"?, "note"? }`; `delivery` exige `address` y `addressRef`. Responde `201 { checkoutId, orders }` |
+| `POST` | `/cart/checkout` | Crear los pedidos del carrito, **uno por puesto**, con el mismo `checkoutId` (descuenta stock, vacía carrito). Body: `{ "fulfillment": "pickup" | "delivery", "paymentMethod"?: "cash_on_delivery" | "qr_transfer", "address"?, "addressRef"?, "contactPhone"?, "note"? }`; `delivery` exige `address` y `addressRef`. Responde `201 { checkoutId, orders }` |
 
 ### Órdenes
 
@@ -382,6 +382,8 @@ Todos los endpoints requieren sesión activa (JWT).
 | `GET` | `/order/:id` | Cualquiera | Detalle de una orden propia |
 | `GET` | `/order/seller/mine` | Seller activo | Pedidos de su puesto, con los datos de entrega |
 | `PATCH` | `/order/:id/status` | Seller activo / Admin | Actualizar status de un pedido (solo del propio puesto; `403` si es de otro) |
+| `POST` | `/order/:id/payment-proof` | Comprador dueño | Adjuntar el comprobante de un pedido `qr_transfer`. Body: `{ "url" }`. `404` si no es suyo, `409` si no aplica |
+| `PATCH` | `/order/:id/payment` | Seller activo dueño / Admin | Confirmar o rechazar el pago. Body: `{ "action": "confirm" | "reject", "reason"? }` (el motivo es obligatorio al rechazar). Al confirmar, un pedido `pending` pasa a `paid`. `403` si es de otro puesto, `409` si la transición no es válida |
 
 Estados válidos: `pending` → `paid` → `confirmed` → `shipped` → `delivered` → `cancelled`
 

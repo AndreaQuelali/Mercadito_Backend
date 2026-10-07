@@ -15,6 +15,7 @@ const optionalText = (max: number) =>
 export const CheckoutSchema = z
   .object({
     fulfillment: z.enum(["pickup", "delivery"]),
+    paymentMethod: z.enum(["cash_on_delivery", "qr_transfer"]).optional(),
     address: optionalText(200),
     addressRef: optionalText(200),
     contactPhone: optionalText(30),
@@ -31,6 +32,8 @@ export const CheckoutSchema = z
 
 export type CheckoutInput = {
   fulfillment: "pickup" | "delivery";
+  /** Defaults to cash on delivery */
+  paymentMethod?: "cash_on_delivery" | "qr_transfer";
   address?: string;
   addressRef?: string;
   contactPhone?: string;

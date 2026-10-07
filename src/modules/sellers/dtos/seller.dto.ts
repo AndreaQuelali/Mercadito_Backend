@@ -10,6 +10,10 @@ export interface IUpdateSellerDto {
   description?: string | null;
   avatarUrl?: string | null;
   location?: string | null;
+  acceptsCash?: boolean;
+  acceptsQr?: boolean;
+  paymentQrUrl?: string | null;
+  paymentInstructions?: string | null;
 }
 
 export interface IUpdateSellerStatusDto {
