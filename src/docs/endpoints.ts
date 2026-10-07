@@ -9,7 +9,7 @@ import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.sc
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
 import { CheckoutSchema } from "../modules/carts/schemas/checkout.schema";
 import { PaymentProofSchema, UpdatePaymentSchema } from "../modules/orders/schemas/payment.schema";
-import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
+import { CancelOrderSchema, UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
 import { SendMessageSchema } from "../modules/assistant/assistant.schemas";
 import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
 import { CreateProductSchema } from "../modules/products/schemas/createProduct.schema";
@@ -324,12 +324,26 @@ export const endpoints: Endpoint[] = [
   {
     method: "patch", path: "/order/:id/status", tag: "Orders", summary: "Change the status of an order", access: "adminOrActiveSeller",
     description:
-      "A seller can only update the orders of their own stand (403 otherwise). Moving to `confirmed` emails the buyer " +
-      "(mentioning pickup or delivery) and emits `order:status` to the buyer and to the seller.",
+      "Allowed steps: pending -> paid | confirmed | cancelled; paid -> confirmed | cancelled; confirmed -> shipped | cancelled; " +
+      "shipped -> delivered. Anything else is 409; delivered and cancelled are final. Cancelling needs a `reason` (400) and " +
+      "gives the stock back in the same transaction. A seller can only update the orders of their own stand (403); an admin " +
+      "can force any change (recorded as forced). Every change is written to the order history, emails the buyer and emits " +
+      "`order:status` (with the reason).",
     body: UpdateOrderStatusSchema,
     bodyExample: { status: "confirmed" },
     response: { description: "Order updated", data: ref("Order") },
     errors: [404],
+  },
+  {
+    method: "post", path: "/order/:id/cancel", tag: "Orders", summary: "Cancel my order", access: "user",
+    description:
+      "The buyer cancels their own order while it is `pending` or `paid` (before the seller confirms it). The stock goes back " +
+      "to the products and the seller is notified. An order already paid is not refunded: it is arranged with the seller. " +
+      "404: not my order. 409: the order can no longer be cancelled by the buyer.",
+    body: CancelOrderSchema,
+    bodyExample: { reason: "Me equivoqué de producto" },
+    response: { description: "Order cancelled", data: ref("Order") },
+    errors: [404, 409],
   },
   {
     method: "post", path: "/order/:id/payment-proof", tag: "Orders", summary: "Attach the payment proof of my order", access: "user",

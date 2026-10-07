@@ -1043,7 +1043,46 @@
                 }
               ]
             },
-            "description": "A seller can only update the orders of their own stand (403 otherwise). Moving to `confirmed` emails the buyer (mentioning pickup or delivery) and emits `order:status` to the buyer and to the seller."
+            "description": "Allowed steps: pending -> paid | confirmed | cancelled; paid -> confirmed | cancelled; confirmed -> shipped | cancelled; shipped -> delivered. Anything else is 409; delivered and cancelled are final. Cancelling needs a `reason` (400) and gives the stock back in the same transaction. A seller can only update the orders of their own stand (403); an admin can force any change (recorded as forced). Every change is written to the order history, emails the buyer and emits `order:status` (with the reason)."
+          }
+        },
+        {
+          "name": "Cancel my order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Me equivoqué de producto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/cancel",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "The buyer cancels their own order while it is `pending` or `paid` (before the seller confirms it). The stock goes back to the products and the seller is notified. An order already paid is not refunded: it is arranged with the seller. 404: not my order. 409: the order can no longer be cancelled by the buyer."
           }
         },
         {

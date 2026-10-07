@@ -18,4 +18,21 @@ export async function sendOrderConfirmedEmail(
   });
 }
 
+const STATUS_TEXT: Record<string, string> = {
+  paid: "has been marked as paid",
+  shipped: "is on its way",
+  delivered: "has been delivered",
+  cancelled: "has been cancelled",
+};
+
+/** Status change mail for every status except confirmed (which has its own). */
+export async function sendOrderStatusEmail(toEmail: string, orderId: number, status: string, reason?: string) {
+  const what = STATUS_TEXT[status] ?? `is now ${status}`;
+  await enqueueMail({
+    to: toEmail,
+    subject: `Order #${orderId} ${status}`,
+    text: `Your order #${orderId} ${what}.${reason ? ` Reason: ${reason}.` : ""}`,
+  });
+}
+
 export { initMailWorker };

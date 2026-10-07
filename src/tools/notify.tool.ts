@@ -63,8 +63,8 @@ export async function notifyUser(
   }
 }
 
-export async function notifyOrderStatus(userId: string, orderId: number, status: string) {
-  await notifyUser(userId, "order:status", { orderId, status });
+export async function notifyOrderStatus(userId: string, orderId: number, status: string, reason?: string) {
+  await notifyUser(userId, "order:status", { orderId, status, ...(reason ? { reason } : {}) });
 }
 
 /** Payment events of an order: the seller hears about proofs, the buyer about the verdict. */

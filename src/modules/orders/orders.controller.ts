@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  cancelOrderService,
   getOrderByIdService,
   listMyOrdersService,
   listSellerOrdersService,
@@ -8,7 +9,7 @@ import {
   uploadPaymentProofService,
 } from "./orders.service";
 import { PaymentProofSchema, UpdatePaymentSchema } from "./schemas/payment.schema";
-import { UpdateOrderStatusSchema } from "./schemas/updateOrderStatus.schema";
+import { CancelOrderSchema, UpdateOrderStatusSchema } from "./schemas/updateOrderStatus.schema";
 import { ENV } from "../../config/env.config";
 import { UserRole } from "@prisma/client";
 
@@ -59,7 +60,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       sellerId
     );
     if (!result.ok) {
-      const status = result.message.startsWith("Forbidden") ? 403 : 400;
+      const status = result.code ?? (result.message.startsWith("Forbidden") ? 403 : 400);
       return res.status(status).send({ message: result.message, ok: false, status });
     }
     return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
@@ -136,5 +137,30 @@ export const updatePayment = async (req: Request, res: Response) => {
     return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
   } catch (error) {
     return res.status(500).send({ message: "Error updating payment", ok: false, status: 500 });
+  }
+};
+
+export const cancelOrder = async (req: Request, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    if (Number.isNaN(orderId)) {
+      return res.status(400).send({ message: "Invalid order id", ok: false, status: 400 });
+    }
+    const { success, data, error } = CancelOrderSchema.safeParse(req.body ?? {});
+    if (!success) {
+      return res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+    }
+    const result = await cancelOrderService(req.user?.sub as string, orderId, data.reason);
+    if (!result.ok) {
+      const status = result.code ?? 400;
+      return res.status(status).send({ message: result.message, ok: false, status });
+    }
+    return res.status(200).send({ message: result.message, ok: true, status: 200, data: result.data });
+  } catch (error) {
+    return res.status(500).send({ message: "Error cancelling order", ok: false, status: 500 });
   }
 };

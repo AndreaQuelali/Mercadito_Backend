@@ -381,7 +381,8 @@ Todos los endpoints requieren sesión activa (JWT).
 | `GET` | `/order` | Cualquiera | Mis compras, agrupadas por `checkoutId` (un pedido por puesto) |
 | `GET` | `/order/:id` | Cualquiera | Detalle de una orden propia |
 | `GET` | `/order/seller/mine` | Seller activo | Pedidos de su puesto, con los datos de entrega |
-| `PATCH` | `/order/:id/status` | Seller activo / Admin | Actualizar status de un pedido (solo del propio puesto; `403` si es de otro) |
+| `PATCH` | `/order/:id/status` | Seller activo dueño / Admin | Cambiar el estado. Body: `{ "status", "reason"? }`. Flujo: `pending → paid | confirmed | cancelled`, `paid → confirmed | cancelled`, `confirmed → shipped | cancelled`, `shipped → delivered`; `delivered` y `cancelled` son finales. Otra transición responde `409`; cancelar sin `reason` es `400`; pedido de otro puesto `403`. Un admin puede forzar un estado (queda marcado en el historial). Cada cambio se registra en `OrderEvent`, avisa y envía correo al comprador, y cancelar devuelve el stock en la misma transacción |
+| `POST` | `/order/:id/cancel` | Comprador dueño | Cancelar su pedido mientras esté `pending` o `paid`. Body: `{ "reason"? }`. `404` si no es suyo, `409` si ya fue confirmado. El dinero ya pagado no se reembolsa: se coordina con el vendedor |
 | `POST` | `/order/:id/payment-proof` | Comprador dueño | Adjuntar el comprobante de un pedido `qr_transfer`. Body: `{ "url" }`. `404` si no es suyo, `409` si no aplica |
 | `PATCH` | `/order/:id/payment` | Seller activo dueño / Admin | Confirmar o rechazar el pago. Body: `{ "action": "confirm" | "reject", "reason"? }` (el motivo es obligatorio al rechazar). Al confirmar, un pedido `pending` pasa a `paid`. `403` si es de otro puesto, `409` si la transición no es válida |
 
