@@ -7,7 +7,9 @@ import { ResetPasswordSchema } from "../modules/auth/schemas/resetPassword.schem
 import { AddToCartSchema } from "../modules/carts/schemas/addToCart.schema";
 import { UpdateCartItemSchema } from "../modules/carts/schemas/updateCartItem.schema";
 import { ListNotificationsQuerySchema } from "../modules/notifications/schemas/listNotifications.schema";
-import { UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
+import { CheckoutSchema } from "../modules/carts/schemas/checkout.schema";
+import { PaymentProofSchema, UpdatePaymentSchema } from "../modules/orders/schemas/payment.schema";
+import { CancelOrderSchema, UpdateOrderStatusSchema } from "../modules/orders/schemas/updateOrderStatus.schema";
 import { SendMessageSchema } from "../modules/assistant/assistant.schemas";
 import { SearchQuerySchema } from "../modules/search/schemas/searchQuery.schema";
 import { CreateProductSchema } from "../modules/products/schemas/createProduct.schema";
@@ -271,11 +273,15 @@ export const endpoints: Endpoint[] = [
     response: { description: "Updated cart", data: ref("Cart") },
   },
   {
-    method: "post", path: "/cart/checkout", tag: "Cart", summary: "Create an order from the cart", access: "user",
+    method: "post", path: "/cart/checkout", tag: "Cart", summary: "Create the orders of the cart (one per stand)", access: "user",
     description:
-      "Runs in a transaction: validates stock, creates the order, decrements stock and empties the cart. " +
-      "Sellers are notified with `order:new` (and `stock:low`).",
-    response: { status: 201, description: "Order created", data: ref("Order") },
+      "Runs in a transaction: validates stock, creates **one order per stand** with products in the cart (all sharing " +
+      "a `checkoutId`), decrements stock and empties the cart. If any product lacks stock nothing is created. " +
+      "`delivery` requires `address` and `addressRef`; `pickup` ignores them. `contactPhone` defaults to the profile phone. " +
+      "Each seller is notified with `order:new` (and `stock:low`). 400: invalid delivery data, empty cart or no stock.",
+    body: CheckoutSchema,
+    bodyExample: { fulfillment: "delivery", address: "Av. Siempre Viva 123", addressRef: "Portón verde, frente a la panadería", note: "Tocar el timbre" },
+    response: { status: 201, description: "Orders created", data: ref("Checkout") },
     errors: [400],
   },
   {
@@ -300,13 +306,13 @@ export const endpoints: Endpoint[] = [
 
   // Orders
   {
-    method: "get", path: "/order", tag: "Orders", summary: "List my orders", access: "user",
-    description: "Answers 400 when the user has no orders.",
-    response: { description: "My orders", data: list("Order") },
+    method: "get", path: "/order", tag: "Orders", summary: "List my purchases", access: "user",
+    description: "Orders grouped by purchase (`checkoutId`), newest first, one order per stand. Answers 400 when the user has no orders.",
+    response: { description: "My purchases", data: list("Purchase") },
     errors: [400],
   },
   {
-    method: "get", path: "/order/seller/mine", tag: "Orders", summary: "List orders that contain my products", access: "seller",
+    method: "get", path: "/order/seller/mine", tag: "Orders", summary: "List the orders of my stand", access: "seller",
     response: { description: "Orders of my store", data: list("Order") },
     errors: [400],
   },
@@ -318,12 +324,48 @@ export const endpoints: Endpoint[] = [
   {
     method: "patch", path: "/order/:id/status", tag: "Orders", summary: "Change the status of an order", access: "adminOrActiveSeller",
     description:
-      "A seller can only update orders that contain their products. Moving to `confirmed` emails the buyer " +
-      "and emits `order:status` to the buyer and to each seller involved.",
+      "Allowed steps: pending -> paid | confirmed | cancelled; paid -> confirmed | cancelled; confirmed -> shipped | cancelled; " +
+      "shipped -> delivered. Anything else is 409; delivered and cancelled are final. Cancelling needs a `reason` (400) and " +
+      "gives the stock back in the same transaction. A seller can only update the orders of their own stand (403); an admin " +
+      "can force any change (recorded as forced). Every change is written to the order history, emails the buyer and emits " +
+      "`order:status` (with the reason).",
     body: UpdateOrderStatusSchema,
     bodyExample: { status: "confirmed" },
     response: { description: "Order updated", data: ref("Order") },
     errors: [404],
+  },
+  {
+    method: "post", path: "/order/:id/cancel", tag: "Orders", summary: "Cancel my order", access: "user",
+    description:
+      "The buyer cancels their own order while it is `pending` or `paid` (before the seller confirms it). The stock goes back " +
+      "to the products and the seller is notified. An order already paid is not refunded: it is arranged with the seller. " +
+      "404: not my order. 409: the order can no longer be cancelled by the buyer.",
+    body: CancelOrderSchema,
+    bodyExample: { reason: "Me equivoqué de producto" },
+    response: { description: "Order cancelled", data: ref("Order") },
+    errors: [404, 409],
+  },
+  {
+    method: "post", path: "/order/:id/payment-proof", tag: "Orders", summary: "Attach the payment proof of my order", access: "user",
+    description:
+      "Only for `qr_transfer` orders of the buyer. Allowed when the payment is `unpaid` or `rejected`; the order then " +
+      "becomes `proof_uploaded` and the seller gets `payment:proof`. 404: not my order. 409: wrong method, already paid, " +
+      "proof already waiting or order cancelled.",
+    body: PaymentProofSchema,
+    bodyExample: { url: "https://example.com/comprobante.jpg" },
+    response: { description: "Order with the proof", data: ref("Order") },
+    errors: [404, 409],
+  },
+  {
+    method: "patch", path: "/order/:id/payment", tag: "Orders", summary: "Confirm or reject the payment of an order", access: "adminOrActiveSeller",
+    description:
+      "`confirm` marks the payment `paid` (a `pending` order becomes `paid`): for QR it needs a proof, for cash it is the " +
+      "collection on delivery. `reject` needs a `reason` and only applies to a proof waiting for review. The buyer gets " +
+      "`payment:confirmed` or `payment:rejected`. 403: the order belongs to another stand. 409: invalid transition.",
+    body: UpdatePaymentSchema,
+    bodyExample: { action: "reject", reason: "El monto no coincide" },
+    response: { description: "Order updated", data: ref("Order") },
+    errors: [403, 404, 409],
   },
 
   // Reviews

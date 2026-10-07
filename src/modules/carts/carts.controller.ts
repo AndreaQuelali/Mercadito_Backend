@@ -8,6 +8,7 @@ import {
   updateCartItemService,
 } from "./carts.service";
 import { AddToCartSchema } from "./schemas/addToCart.schema";
+import { CheckoutSchema } from "./schemas/checkout.schema";
 import { UpdateCartItemSchema } from "./schemas/updateCartItem.schema";
 import { ENV } from "../../config/env.config";
 
@@ -97,7 +98,17 @@ export const clearCart = async (req: Request, res: Response) => {
 export const checkout = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.sub as string;
-    const result = await checkoutService(userId);
+
+    const { success, data, error } = CheckoutSchema.safeParse(req.body ?? {});
+    if (!success) {
+      return res.status(400).send({
+        message: ENV.NODE_ENV === "development" ? error.issues : "Bad request",
+        status: 400,
+        ok: false,
+      });
+    }
+
+    const result = await checkoutService(userId, data);
     if (!result.ok) return res.status(400).send({ message: result.message, ok: false, status: 400 });
     return res.status(201).send({ message: result.message, ok: true, status: 201, data: result.data });
   } catch (error) {

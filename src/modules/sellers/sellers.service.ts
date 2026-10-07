@@ -76,6 +76,23 @@ export const updateMySellerService = async (
       data.avatarUrl = payload.avatarUrl === "" ? null : payload.avatarUrl;
     }
     if (payload.location !== undefined) data.location = payload.location;
+    if (payload.acceptsCash !== undefined) data.acceptsCash = payload.acceptsCash;
+    if (payload.acceptsQr !== undefined) data.acceptsQr = payload.acceptsQr;
+    if (payload.paymentQrUrl !== undefined) {
+      data.paymentQrUrl = payload.paymentQrUrl === "" ? null : payload.paymentQrUrl;
+    }
+    if (payload.paymentInstructions !== undefined) {
+      data.paymentInstructions = payload.paymentInstructions || null;
+    }
+
+    // The result must still be a usable setup: some method, and QR needs something to pay to
+    const next = { ...existing, ...data } as typeof existing;
+    if (!next.acceptsCash && !next.acceptsQr) {
+      return { ok: false, message: "Accept at least one payment method" };
+    }
+    if (next.acceptsQr && !next.paymentQrUrl && !next.paymentInstructions) {
+      return { ok: false, message: "To accept QR or transfer, add a QR image or payment instructions" };
+    }
 
     const updated = await prisma.seller.update({
       where: { userId },

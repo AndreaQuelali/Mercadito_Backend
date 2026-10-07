@@ -251,7 +251,7 @@ export async function proposeWriteTool(name: WriteTool, rawArgs: unknown, ctx: T
       const detail = cart.items.map((l) => `${l.quantity} ${unitLabel(l.unit)} de ${l.name}`).join(", ");
       return {
         args,
-        summary: `Hacer el pedido: ${detail}. Total ${bs(cart.total)}`,
+        summary: `Hacer el pedido (retiro en el puesto): ${detail}. Total ${bs(cart.total)}`,
         cartFingerprint: cartFingerprint(items),
       };
     }

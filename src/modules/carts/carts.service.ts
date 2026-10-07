@@ -2,6 +2,20 @@ import prisma from "../../config/prisma";
 import { IServiceResponse } from "../../types";
 import { IAddToCartDto } from "./dtos/addToCart.dto";
 import { ISaleLine, notifyOrderCreated } from "../../tools/notify.tool";
+import { randomUUID } from "crypto";
+import { Fulfillment } from "@prisma/client";
+import { CheckoutInput } from "./schemas/checkout.schema";
+
+/** Cart lines carry their product and the stand it belongs to (checkout groups by stand). */
+const CART_ITEM_INCLUDE = {
+  product: {
+    include: {
+      seller: {
+        select: { id: true, businessName: true, location: true, acceptsCash: true, acceptsQr: true },
+      },
+    },
+  },
+} as const;
 
 export async function getOrCreateCart(userId: string) {
   let cart = await prisma.cart.findFirst({ where: { userId } });
@@ -19,7 +33,7 @@ export async function getCartService(
       where: { userId },
       include: {
         items: {
-          include: { product: true },
+          include: CART_ITEM_INCLUDE,
         },
       },
     });
@@ -84,7 +98,7 @@ export async function addToCartService(
 
     const full = await prisma.cart.findUnique({
       where: { id: cart.id },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: CART_ITEM_INCLUDE } },
     });
 
     return { ok: true, message: "Added to cart", data: full };
@@ -110,7 +124,7 @@ export async function removeCartItemService(
 
     const updated = await prisma.cart.findUnique({
       where: { id: cart.id },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: CART_ITEM_INCLUDE } },
     });
 
     return { ok: true, message: "Item removed from cart", data: updated };
@@ -149,7 +163,7 @@ export async function updateCartItemService(
 
     const updated = await prisma.cart.findUnique({
       where: { id: cart.id },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: CART_ITEM_INCLUDE } },
     });
 
     return { ok: true, message: "Cart item updated", data: updated };
@@ -174,11 +188,12 @@ export async function clearCartService(
 }
 
 export async function checkoutService(
-  userId: string
+  userId: string,
+  delivery: CheckoutInput = { fulfillment: "pickup" }
 ): Promise<IServiceResponse<any>> {
   try {
     // Filled inside the transaction, dispatched only after it commits
-    const sales: ISaleLine[] = [];
+    const notifications: { orderId: number; fulfillment: Fulfillment; sales: ISaleLine[] }[] = [];
 
     const result = await prisma.$transaction(async (tx) => {
       const cart = await tx.cart.findFirst({
@@ -189,52 +204,95 @@ export async function checkoutService(
         return { ok: false, message: "Cart is empty" } as IServiceResponse<any>;
       }
 
-      let total = 0;
+      // Validate everything before creating anything: one short product means no order at all
+      const lines: { productId: number; quantity: number; product: any }[] = [];
       for (const item of cart.items) {
-        const p = await tx.product.findUnique({
+        const product = await tx.product.findUnique({
           where: { id: item.productId },
-        });
-        if (!p)
-          return {
-            ok: false,
-            message: `Product ${item.productId} not found`,
-          } as IServiceResponse<any>;
-        if (p.stock < item.quantity)
-          return {
-            ok: false,
-            message: `Insufficient stock for product ${p.id}`,
-          } as IServiceResponse<any>;
-        total += Number(p.price) * item.quantity;
-      }
-
-      const order = await tx.order.create({
-        data: { userId, total, status: "pending" },
-      });
-
-      for (const item of cart.items) {
-        const p = await tx.product.findUnique({
-          where: { id: item.productId },
-          include: { seller: { select: { userId: true } } },
-        });
-        await tx.orderItem.create({
-          data: {
-            orderId: order.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: p!.price,
+          include: {
+            seller: { select: { userId: true, businessName: true, acceptsCash: true, acceptsQr: true } },
           },
         });
-        await tx.product.update({
-          where: { id: p!.id },
-          data: { stock: p!.stock - item.quantity },
+        if (!product)
+          return { ok: false, message: `Product ${item.productId} not found` } as IServiceResponse<any>;
+        if (product.stock < item.quantity)
+          return { ok: false, message: `Insufficient stock for product ${product.id}` } as IServiceResponse<any>;
+        lines.push({ productId: item.productId, quantity: item.quantity, product });
+      }
+
+      // Every stand of the purchase must accept the chosen payment method
+      const paymentMethod = delivery.paymentMethod ?? "cash_on_delivery";
+      for (const line of lines) {
+        const seller = line.product.seller;
+        const accepted = paymentMethod === "qr_transfer" ? seller?.acceptsQr : seller?.acceptsCash;
+        if (!accepted) {
+          return {
+            ok: false,
+            message: `${seller?.businessName ?? "A stand"} does not accept the payment method ${paymentMethod}`,
+          } as IServiceResponse<any>;
+        }
+      }
+
+      let contactPhone = delivery.contactPhone;
+      if (!contactPhone) {
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { phoneCountryCode: true, phoneNumber: true },
         });
-        sales.push({
-          sellerUserId: p!.seller?.userId,
-          productId: p!.id,
-          name: p!.name,
-          quantity: item.quantity,
-          stock: p!.stock - item.quantity,
+        contactPhone = user ? `${user.phoneCountryCode} ${user.phoneNumber}` : "";
+      }
+
+      // One order per seller, all sharing the checkoutId of this purchase
+      const bySeller = new Map<string, typeof lines>();
+      for (const line of lines) {
+        const sellerId = line.product.sellerId as string;
+        bySeller.set(sellerId, [...(bySeller.get(sellerId) ?? []), line]);
+      }
+
+      const checkoutId = randomUUID();
+      const orders: any[] = [];
+      for (const [sellerId, sellerLines] of bySeller) {
+        const total = sellerLines.reduce((sum, l) => sum + Number(l.product.price) * l.quantity, 0);
+        const order = await tx.order.create({
+          data: {
+            userId,
+            sellerId,
+            checkoutId,
+            total,
+            status: "pending",
+            fulfillment: delivery.fulfillment,
+            paymentMethod,
+            address: delivery.address ?? null,
+            addressRef: delivery.addressRef ?? null,
+            contactPhone,
+            note: delivery.note ?? null,
+          },
         });
+        orders.push(order);
+
+        const sales: ISaleLine[] = [];
+        for (const l of sellerLines) {
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              productId: l.productId,
+              quantity: l.quantity,
+              price: l.product.price,
+            },
+          });
+          await tx.product.update({
+            where: { id: l.productId },
+            data: { stock: l.product.stock - l.quantity },
+          });
+          sales.push({
+            sellerUserId: l.product.seller?.userId,
+            productId: l.productId,
+            name: l.product.name,
+            quantity: l.quantity,
+            stock: l.product.stock - l.quantity,
+          });
+        }
+        notifications.push({ orderId: order.id, fulfillment: delivery.fulfillment, sales });
       }
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
@@ -242,16 +300,18 @@ export async function checkoutService(
       return {
         ok: true,
         message: "Order created",
-        data: order,
+        data: { checkoutId, orders },
       } as IServiceResponse<any>;
     });
 
     if (result.ok) {
       // Notifications are best-effort: they must never fail a committed order
-      try {
-        await notifyOrderCreated(result.data.id, sales);
-      } catch {
-        console.log(`[notify:fallback] order:new for order ${result.data?.id} not delivered`);
+      for (const n of notifications) {
+        try {
+          await notifyOrderCreated(n.orderId, n.sales, n.fulfillment);
+        } catch {
+          console.log(`[notify:fallback] order:new for order ${n.orderId} not delivered`);
+        }
       }
     }
 

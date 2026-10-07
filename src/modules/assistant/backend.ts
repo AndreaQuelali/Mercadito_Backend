@@ -57,5 +57,6 @@ export const servicesBackend: AssistantBackend = {
   addToCart: (userId, args) => addToCartService(userId, args),
   updateCartItem: (userId, itemId, quantity) => updateCartItemService(userId, itemId, quantity),
   removeCartItem: (userId, itemId) => removeCartItemService(userId, itemId),
-  checkout: (userId) => checkoutService(userId),
+  // The assistant cannot ask for an address: its orders are pick-up at the stand
+  checkout: (userId) => checkoutService(userId, { fulfillment: "pickup" }),
 };

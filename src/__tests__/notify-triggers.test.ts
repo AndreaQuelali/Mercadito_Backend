@@ -27,6 +27,7 @@ function mockTx(product: any, cartItems: any[]) {
     fn({
       cart: { findFirst: vi.fn().mockResolvedValue({ id: 10, items: cartItems }) },
       product: { findUnique: vi.fn().mockResolvedValue(product), update: vi.fn() },
+      user: { findUnique: vi.fn().mockResolvedValue({ phoneCountryCode: "+591", phoneNumber: "7000" }) },
       order: { create: vi.fn().mockResolvedValue({ id: 42, userId }) },
       orderItem: { create: vi.fn() },
       cartItem: { deleteMany: vi.fn() },
@@ -37,22 +38,24 @@ function mockTx(product: any, cartItems: any[]) {
 describe("checkoutService → notifications", () => {
   it("notifies sellers with the stock left after the sale", async () => {
     mockTx(
-      { id: 1, name: "Tomate", price: 10, stock: 6, seller: { userId: "seller-u1" } },
+      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "seller-u1", acceptsCash: true } },
       [{ id: 100, productId: 1, quantity: 2 }]
     );
 
-    const result = await checkoutService(userId);
+    const result = await checkoutService(userId, { fulfillment: "delivery", address: "Calle 1", addressRef: "Puerta verde" });
 
     expect(result.ok).toBe(true);
-    expect(notifyOrderCreated).toHaveBeenCalledWith(42, [
-      { sellerUserId: "seller-u1", productId: 1, name: "Tomate", quantity: 2, stock: 4 },
-    ]);
+    expect(notifyOrderCreated).toHaveBeenCalledWith(
+      42,
+      [{ sellerUserId: "seller-u1", productId: 1, name: "Tomate", quantity: 2, stock: 4 }],
+      "delivery"
+    );
   });
 
   it("does not notify when checkout fails", async () => {
     mockTx({ id: 1, price: 10, stock: 1 }, [{ id: 100, productId: 1, quantity: 5 }]);
 
-    const result = await checkoutService(userId);
+    const result = await checkoutService(userId, { fulfillment: "pickup" });
 
     expect(result.ok).toBe(false);
     expect(notifyOrderCreated).not.toHaveBeenCalled();
@@ -60,12 +63,12 @@ describe("checkoutService → notifications", () => {
 
   it("does not fail the checkout when notifying throws", async () => {
     mockTx(
-      { id: 1, name: "Tomate", price: 10, stock: 6, seller: { userId: "s" } },
+      { id: 1, name: "Tomate", price: 10, stock: 6, sellerId: "s1", seller: { userId: "s", acceptsCash: true } },
       [{ id: 100, productId: 1, quantity: 1 }]
     );
     (notifyOrderCreated as any).mockRejectedValue(new Error("socket down"));
 
-    const result = await checkoutService(userId);
+    const result = await checkoutService(userId, { fulfillment: "pickup" });
 
     expect(result.ok).toBe(true);
   });

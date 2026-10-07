@@ -851,10 +851,24 @@
           }
         },
         {
-          "name": "Create an order from the cart",
+          "name": "Create the orders of the cart (one per stand)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fulfillment\": \"delivery\",\n  \"address\": \"Av. Siempre Viva 123\",\n  \"addressRef\": \"Portón verde, frente a la panadería\",\n  \"note\": \"Tocar el timbre\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{API_URL}}/cart/checkout",
               "host": [
@@ -865,7 +879,7 @@
                 "checkout"
               ]
             },
-            "description": "Runs in a transaction: validates stock, creates the order, decrements stock and empties the cart. Sellers are notified with `order:new` (and `stock:low`)."
+            "description": "Runs in a transaction: validates stock, creates **one order per stand** with products in the cart (all sharing a `checkoutId`), decrements stock and empties the cart. If any product lacks stock nothing is created. `delivery` requires `address` and `addressRef`; `pickup` ignores them. `contactPhone` defaults to the profile phone. Each seller is notified with `order:new` (and `stock:low`). 400: invalid delivery data, empty cart or no stock."
           }
         },
         {
@@ -936,7 +950,7 @@
       "name": "Orders",
       "item": [
         {
-          "name": "List my orders",
+          "name": "List my purchases",
           "request": {
             "method": "GET",
             "header": [],
@@ -949,11 +963,11 @@
                 "order"
               ]
             },
-            "description": "Answers 400 when the user has no orders."
+            "description": "Orders grouped by purchase (`checkoutId`), newest first, one order per stand. Answers 400 when the user has no orders."
           }
         },
         {
-          "name": "List orders that contain my products",
+          "name": "List the orders of my stand",
           "request": {
             "method": "GET",
             "header": [],
@@ -1029,7 +1043,124 @@
                 }
               ]
             },
-            "description": "A seller can only update orders that contain their products. Moving to `confirmed` emails the buyer and emits `order:status` to the buyer and to each seller involved."
+            "description": "Allowed steps: pending -> paid | confirmed | cancelled; paid -> confirmed | cancelled; confirmed -> shipped | cancelled; shipped -> delivered. Anything else is 409; delivered and cancelled are final. Cancelling needs a `reason` (400) and gives the stock back in the same transaction. A seller can only update the orders of their own stand (403); an admin can force any change (recorded as forced). Every change is written to the order history, emails the buyer and emits `order:status` (with the reason)."
+          }
+        },
+        {
+          "name": "Cancel my order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Me equivoqué de producto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/cancel",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "The buyer cancels their own order while it is `pending` or `paid` (before the seller confirms it). The stock goes back to the products and the seller is notified. An order already paid is not refunded: it is arranged with the seller. 404: not my order. 409: the order can no longer be cancelled by the buyer."
+          }
+        },
+        {
+          "name": "Attach the payment proof of my order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/comprobante.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/payment-proof",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "payment-proof"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Only for `qr_transfer` orders of the buyer. Allowed when the payment is `unpaid` or `rejected`; the order then becomes `proof_uploaded` and the seller gets `payment:proof`. 404: not my order. 409: wrong method, already paid, proof already waiting or order cancelled."
+          }
+        },
+        {
+          "name": "Confirm or reject the payment of an order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\",\n  \"reason\": \"El monto no coincide\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/order/:id/payment",
+              "host": [
+                "{{API_URL}}"
+              ],
+              "path": [
+                "order",
+                ":id",
+                "payment"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "`confirm` marks the payment `paid` (a `pending` order becomes `paid`): for QR it needs a proof, for cash it is the collection on delivery. `reject` needs a `reason` and only applies to a proof waiting for review. The buyer gets `payment:confirmed` or `payment:rejected`. 403: the order belongs to another stand. 409: invalid transition."
           }
         }
       ]

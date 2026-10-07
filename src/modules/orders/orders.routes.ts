@@ -1,9 +1,12 @@
 import { Router } from "express";
 import {
+  cancelOrder,
   getOrderById,
   listMyOrders,
   listSellerOrders,
   updateOrderStatus,
+  updatePayment,
+  uploadPaymentProof,
 } from "./orders.controller";
 import { validateSesionUser } from "../../middleware/userSesion.middleware";
 import {
@@ -29,5 +32,14 @@ orderRouter.patch(
   requireAdminOrActiveSeller,
   updateOrderStatus
 );
+
+// Buyer (owner of the order) — cancel while the seller has not confirmed it
+orderRouter.post("/:id/cancel", cancelOrder);
+
+// Buyer (owner of the order) — attach the payment proof
+orderRouter.post("/:id/payment-proof", uploadPaymentProof);
+
+// Active seller (owner of the order) or Admin — confirm or reject the payment
+orderRouter.patch("/:id/payment", requireAdminOrActiveSeller, updatePayment);
 
 export default orderRouter;

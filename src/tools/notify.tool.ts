@@ -7,7 +7,10 @@ export type NotificationType =
   | "order:status"
   | "order:new"
   | "stock:low"
-  | "review:new";
+  | "review:new"
+  | "payment:proof"
+  | "payment:confirmed"
+  | "payment:rejected";
 
 /** One product line of a completed checkout, with the stock left after the sale. */
 export interface ISaleLine {
@@ -60,12 +63,26 @@ export async function notifyUser(
   }
 }
 
-export async function notifyOrderStatus(userId: string, orderId: number, status: string) {
-  await notifyUser(userId, "order:status", { orderId, status });
+export async function notifyOrderStatus(userId: string, orderId: number, status: string, reason?: string) {
+  await notifyUser(userId, "order:status", { orderId, status, ...(reason ? { reason } : {}) });
+}
+
+/** Payment events of an order: the seller hears about proofs, the buyer about the verdict. */
+export async function notifyPayment(
+  userId: string,
+  type: "payment:proof" | "payment:confirmed" | "payment:rejected",
+  orderId: number,
+  extra: Record<string, unknown> = {}
+) {
+  await notifyUser(userId, type, { orderId, ...extra });
 }
 
 /** Tells each seller about the new order (their items only) and about low stock. */
-export async function notifyOrderCreated(orderId: number, sales: ISaleLine[]): Promise<void> {
+export async function notifyOrderCreated(
+  orderId: number,
+  sales: ISaleLine[],
+  fulfillment?: "pickup" | "delivery"
+): Promise<void> {
   const bySeller = new Map<string, ISaleLine[]>();
   for (const line of sales) {
     if (!line.sellerUserId) continue;
@@ -76,6 +93,7 @@ export async function notifyOrderCreated(orderId: number, sales: ISaleLine[]): P
   for (const [sellerUserId, lines] of bySeller) {
     await notifyUser(sellerUserId, "order:new", {
       orderId,
+      ...(fulfillment ? { fulfillment } : {}),
       items: lines.map((l) => ({ productId: l.productId, name: l.name, quantity: l.quantity })),
     });
 
